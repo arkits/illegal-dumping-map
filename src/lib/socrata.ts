@@ -21,16 +21,21 @@ interface SocrataResponse {
   id: string;
   requestid?: string;
   service_request_id?: string;
+  srnumber?: string;
   srx?: string;
   sry?: string;
   lat?: string;
   long?: string;
+  latitude?: string;
+  longitude?: string;
   datetimeinit?: string;
   requested_datetime?: string;
+  createddate?: string;
   status?: string;
   status_description?: string;
   reqcategory?: string;
   service_details?: string;
+  requesttype?: string;
   description?: string;
   address?: string;
   probaddress?: string;
@@ -95,6 +100,19 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     status = record.status || "";
     description = record.description || "";
     address = record.probaddress || record.address || "";
+  } else if (cityId === "losangeles") {
+    id = record.srnumber || "";
+    lat = parseFloat(record.latitude || "0");
+    lon = parseFloat(record.longitude || "0");
+
+    if (!filterInvalidCoordinates(lon, lat)) {
+      return null;
+    }
+
+    datetimeinit = record.createddate || "";
+    status = record.status || "";
+    description = record.requesttype || record.description || "";
+    address = record.address || "";
   } else {
     id = record.service_request_id || "";
     lat = parseFloat(record.lat || "0");

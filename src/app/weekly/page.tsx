@@ -121,12 +121,22 @@ export default function WeeklyTrendsPage() {
           <p>
             Data source:{" "}
             <a
-              href={selectedCity === "oakland" ? "https://data.oaklandca.gov/" : "https://data.sfgov.org/"}
+              href={
+                selectedCity === "oakland"
+                  ? "https://data.oaklandca.gov/"
+                  : selectedCity === "sanfrancisco"
+                  ? "https://data.sfgov.org/"
+                  : "https://data.lacity.org/"
+              }
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 dark:text-blue-400 hover:underline"
             >
-              {selectedCity === "oakland" ? "Oakland Open Data Portal" : "DataSF"}
+              {selectedCity === "oakland"
+                ? "Oakland Open Data Portal"
+                : selectedCity === "sanfrancisco"
+                ? "DataSF"
+                : "DataLA"}
             </a>{" "}
             (311 Service Requests)
           </p>

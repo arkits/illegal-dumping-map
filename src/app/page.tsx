@@ -12,7 +12,7 @@ export default function HomePage() {
             Illegal Dumping Map
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Explore illegal dumping service request data across Bay Area cities
+            Explore illegal dumping service request data across California cities
           </p>
         </div>
       </header>
@@ -22,7 +22,7 @@ export default function HomePage() {
           Select a City
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {cities.map((city) => (
             <Link
               key={city.id}
@@ -38,7 +38,9 @@ export default function HomePage() {
                   <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm">
                     {city.id === "oakland"
                       ? "View illegal dumping service requests in Oakland. Data includes ~370,000+ records with detailed location information."
-                      : "View illegal dumping service requests in San Francisco. Data includes 2,620+ records filtered by trash dumping incidents."}
+                      : city.id === "sanfrancisco"
+                      ? "View illegal dumping service requests in San Francisco. Data includes 2,620+ records filtered by trash dumping incidents."
+                      : "View illegal dumping service requests in Los Angeles. Data includes ~114K records in 2024 from MyLA311 service requests."}
                   </p>
                   <div className="mt-4 flex items-center text-sm text-blue-600 dark:text-blue-400">
                     <span>View Map & Statistics</span>
@@ -88,6 +90,15 @@ export default function HomePage() {
               className="hover:underline"
             >
               DataSF
+            </a>
+            <span className="text-blue-300 dark:text-blue-700">|</span>
+            <a
+              href="https://data.lacity.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:underline"
+            >
+              DataLA
             </a>
           </div>
         </div>

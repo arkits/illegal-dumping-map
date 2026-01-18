@@ -31,6 +31,22 @@ export const CITIES = {
     requiresCoordinateConversion: false,
     color: "red",
   },
+  losangeles: {
+    id: "losangeles",
+    route: "/los-angeles",
+    name: "Los Angeles",
+    domain: "data.lacity.org",
+    datasetId: "b7dx-7gc3",
+    filterField: "requesttype",
+    filterValue: "Illegal Dumping Pickup",
+    dateField: "createddate",
+    addressField: "address",
+    descriptionField: "requesttype",
+    centerLat: 34.0522,
+    centerLon: -118.2437,
+    requiresCoordinateConversion: false,
+    color: "purple",
+  },
 } as const;
 
 export type CityId = keyof typeof CITIES;
