@@ -40,7 +40,7 @@ function MapController({
   const map = useMap();
 
   useEffect(() => {
-    if (centerLat && centerLon) {
+    if (centerLat != null && centerLon != null) {
       map.setView([centerLat, centerLon], 12);
     }
   }, [map, centerLat, centerLon]);
@@ -63,7 +63,7 @@ export default function RequestMap({ requests, centerLat, centerLon }: MapProps)
     );
   }
 
-  const defaultCenter: [number, number] = centerLat && centerLon
+  const defaultCenter: [number, number] = centerLat != null && centerLon != null
     ? [centerLat, centerLon]
     : [37.804747, -122.272];
 

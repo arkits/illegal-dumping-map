@@ -41,15 +41,23 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchData() {
       setLoading(true);
       setError(null);
 
       try {
         const [statsRes, requestsRes, weeklyRes] = await Promise.all([
-          fetch(`/api/stats?year=${selectedYear}&compareYear=${selectedYear - 1}`),
-          fetch(`/api/requests?year=${selectedYear}&limit=5000`),
-          fetch(`/api/weekly?years=${selectedYear},${selectedYear - 1}`),
+          fetch(`/api/stats?year=${selectedYear}&compareYear=${selectedYear - 1}`, {
+            signal: controller.signal,
+          }),
+          fetch(`/api/requests?year=${selectedYear}&limit=5000`, {
+            signal: controller.signal,
+          }),
+          fetch(`/api/weekly?years=${selectedYear},${selectedYear - 1}`, {
+            signal: controller.signal,
+          }),
         ]);
 
         if (!statsRes.ok || !requestsRes.ok || !weeklyRes.ok) {
@@ -62,18 +70,24 @@ export default function Home() {
           weeklyRes.json(),
         ]);
 
+        if (controller.signal.aborted) return;
+
         setStats(statsData);
         setRequests(requestsData.requests);
         setWeeklyData(weeklyDataResponse.weeklyData);
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching data:", err);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     }
 
     fetchData();
+    return () => controller.abort();
   }, [selectedYear]);
 
   return (
@@ -88,8 +102,11 @@ export default function Home() {
           </p>
 
           <div className="mt-4 flex items-center gap-4">
-            <label className="text-sm font-medium text-gray-700">Select Year:</label>
+            <label htmlFor="year-select" className="text-sm font-medium text-gray-700">
+              Select Year:
+            </label>
             <select
+              id="year-select"
               value={selectedYear}
               onChange={(e) => setSelectedYear(parseInt(e.target.value))}
               className="block w-40 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border"

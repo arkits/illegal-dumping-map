@@ -55,10 +55,18 @@ export default function Stats({ stats, loading }: StatsProps) {
           Average Per Week ({stats.year})
         </p>
         <p className="text-3xl font-bold text-gray-900">
-          {stats.avgPerWeek.toLocaleString()}
+          {stats.avgPerWeek.toLocaleString(undefined, {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          })}
         </p>
         <p className="text-sm text-gray-500 mt-1">
-          vs {stats.previousAvgPerWeek} in {stats.compareYear}
+          vs{" "}
+          {stats.previousAvgPerWeek.toLocaleString(undefined, {
+            minimumFractionDigits: 1,
+            maximumFractionDigits: 1,
+          })}{" "}
+          in {stats.compareYear}
         </p>
       </div>
 

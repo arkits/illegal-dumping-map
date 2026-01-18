@@ -23,17 +23,27 @@ interface WeeklyTrendsChartProps {
 
 export default function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
   const years = [...new Set(data.map((d) => d.year))].sort((a, b) => b - a);
+  
+  if (years.length === 0) {
+    return (
+      <div className="w-full h-80 flex items-center justify-center text-sm text-gray-500">
+        No weekly data available
+      </div>
+    );
+  }
+  
   const currentYear = years[0];
   const previousYear = years[1];
 
-  const chartData = Array.from({ length: 52 }, (_, i) => {
+  const chartData = Array.from({ length: 53 }, (_, i) => {
     const week = i + 1;
     const currentWeekData = data.find((d) => d.year === currentYear && d.week === week);
-    const previousWeekData = data.find((d) => d.year === previousYear && d.week === week);
+    const previousWeekData =
+      previousYear != null ? data.find((d) => d.year === previousYear && d.week === week) : undefined;
     return {
       week: `W${week}`,
       [currentYear]: currentWeekData?.count || 0,
-      [previousYear]: previousWeekData?.count || 0,
+      ...(previousYear != null ? { [previousYear]: previousWeekData?.count || 0 } : {}),
     };
   });
 
@@ -67,14 +77,16 @@ export default function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
             dot={false}
             activeDot={{ r: 6 }}
           />
-          <Line
-            type="monotone"
-            dataKey={previousYear}
-            stroke="#f97316"
-            strokeWidth={2}
-            dot={false}
-            activeDot={{ r: 6 }}
-          />
+          {previousYear != null && (
+            <Line
+              type="monotone"
+              dataKey={previousYear}
+              stroke="#f97316"
+              strokeWidth={2}
+              dot={false}
+              activeDot={{ r: 6 }}
+            />
+          )}
         </LineChart>
       </ResponsiveContainer>
     </div>

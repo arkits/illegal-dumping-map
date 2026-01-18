@@ -4,6 +4,18 @@ export const EARTH_RADIUS_METERS = 6378137;
 export const OAKLAND_CENTER_LAT = 37.804747;
 export const OAKLAND_CENTER_LON = -122.272;
 
+/**
+ * Converts Web Mercator (EPSG:3857) coordinates to WGS84 (EPSG:4326) coordinates.
+ * 
+ * @param x - Web Mercator X coordinate in meters (EPSG:3857)
+ * @param y - Web Mercator Y coordinate in meters (EPSG:3857)
+ * @returns A tuple of [latitude, longitude] in degrees (WGS84)
+ * 
+ * @remarks
+ * The inputs x and y are Web Mercator coordinates in meters, not degrees.
+ * The function uses EARTH_RADIUS_METERS as the assumed sphere radius and
+ * converts radians to degrees using radToDeg.
+ */
 export function webMercatorToWGS84(x: number, y: number): [number, number] {
   const lonRad = x / EARTH_RADIUS_METERS;
   const latRad = 2 * Math.atan(Math.exp(y / EARTH_RADIUS_METERS)) - Math.PI / 2;
@@ -15,6 +27,13 @@ function radToDeg(rad: number): number {
   return rad * (180 / Math.PI);
 }
 
+/**
+ * Calculates the distance between two WGS84 coordinates using the Haversine formula.
+ * 
+ * @param coord1 - First coordinate as [latitude, longitude] in degrees
+ * @param coord2 - Second coordinate as [latitude, longitude] in degrees
+ * @returns Distance in kilometers
+ */
 export function distBetweenLatLon(
   coord1: [number, number],
   coord2: [number, number]

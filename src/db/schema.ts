@@ -19,8 +19,8 @@ export const requests = sqliteTable("requests", {
 
 export const cacheMetadata = sqliteTable("cache_metadata", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  key: text("key").unique(),
-  value: text("value"),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
   expiresAt: text("expires_at"),
   createdAt: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });

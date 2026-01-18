@@ -1,7 +1,7 @@
-import { OAKLAND_DOMAIN, DATASET_ID, DumpingRequest } from "@/lib/utils";
+import { OAKLAND_DOMAIN, DATASET_ID, DumpingRequest, webMercatorToWGS84, distBetweenLatLon } from "@/lib/utils";
 
 const API_TOKEN = process.env.OAK311_API_TOKEN;
-const API_USERNAME = process.env.OAK311_API_USERNAME || "admin";
+const API_USERNAME = process.env.OAK311_API_USERNAME;
 
 interface SocrataResponse {
   id: string;
@@ -75,8 +75,8 @@ export async function fetchDumpingRequests(options: {
 
   return data
     .map((record) => {
-      const lon = parseFloat(record.srx || "0");
-      const lat = parseFloat(record.sry || "0");
+      if (!record.srx || !record.sry) return null;
+      const [lat, lon] = webMercatorToWGS84(parseFloat(record.srx), parseFloat(record.sry));
 
       return {
         id: record.id,
@@ -88,13 +88,14 @@ export async function fetchDumpingRequests(options: {
         address: record.address || "",
       };
     })
+    .filter((record): record is DumpingRequest => record !== null)
     .filter((record) => {
-      if (radius && centerLat && centerLon) {
-        const distance = Math.sqrt(
-          Math.pow(record.lat - centerLat, 2) + Math.pow(record.lon - centerLon, 2)
+      if (radius != null && centerLat != null && centerLon != null) {
+        const distanceKm = distBetweenLatLon(
+          [record.lat, record.lon],
+          [centerLat, centerLon]
         );
-        const approxKm = distance * 111;
-        return approxKm <= radius;
+        return distanceKm <= radius;
       }
       return true;
     });

@@ -3,12 +3,42 @@ import { fetchDumpingRequests } from "@/lib/socrata";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const year = searchParams.get("year") ? parseInt(searchParams.get("year")!) : undefined;
-  const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 1000;
-  const offset = searchParams.get("offset") ? parseInt(searchParams.get("offset")!) : 0;
-  const radius = searchParams.get("radius") ? parseFloat(searchParams.get("radius")!) : undefined;
-  const centerLat = searchParams.get("centerLat") ? parseFloat(searchParams.get("centerLat")!) : undefined;
-  const centerLon = searchParams.get("centerLon") ? parseFloat(searchParams.get("centerLon")!) : undefined;
+  
+  const parseIntParam = (v: string | null, fallback: number) => {
+    const n = Number.parseInt(v ?? "", 10);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  
+  const parseFloatParam = (v: string | null) => {
+    const n = Number.parseFloat(v ?? "");
+    return Number.isFinite(n) ? n : undefined;
+  };
+
+  const yearParam = parseIntParam(searchParams.get("year"), NaN);
+  const year = Number.isFinite(yearParam) ? yearParam : undefined;
+  
+  const limit = Math.min(5000, Math.max(1, parseIntParam(searchParams.get("limit"), 1000)));
+  const offset = Math.max(0, parseIntParam(searchParams.get("offset"), 0));
+  
+  const radiusParam = parseFloatParam(searchParams.get("radius"));
+  const radius = radiusParam !== undefined && radiusParam >= 0 ? radiusParam : undefined;
+  
+  const centerLatParam = parseFloatParam(searchParams.get("centerLat"));
+  const centerLat = centerLatParam !== undefined && centerLatParam >= -90 && centerLatParam <= 90 
+    ? centerLatParam 
+    : undefined;
+  
+  const centerLonParam = parseFloatParam(searchParams.get("centerLon"));
+  const centerLon = centerLonParam !== undefined && centerLonParam >= -180 && centerLonParam <= 180 
+    ? centerLonParam 
+    : undefined;
+
+  if (limit < 0 || offset < 0) {
+    return NextResponse.json(
+      { error: "Invalid pagination parameters" },
+      { status: 400 }
+    );
+  }
 
   try {
     const requests = await fetchDumpingRequests({
