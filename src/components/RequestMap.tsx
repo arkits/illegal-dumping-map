@@ -93,7 +93,11 @@ export default function RequestMap({ requests, centerLat, centerLon }: MapProps)
                   {new Date(request.datetimeinit).toLocaleDateString()}
                 </p>
                 {request.description && (
-                  <p className="mt-1 text-xs">{request.description.substring(0, 100)}...</p>
+                  <p className="mt-1 text-xs">
+                    {request.description.length > 100
+                      ? `${request.description.substring(0, 100)}...`
+                      : request.description}
+                  </p>
                 )}
               </div>
             </Popup>

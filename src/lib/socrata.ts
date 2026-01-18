@@ -79,13 +79,13 @@ export async function fetchDumpingRequests(options: {
       const [lat, lon] = isWGS84 ? [sry, srx] : webMercatorToWGS84(srx, sry);
 
       return {
-        id: record.id,
+        id: record.requestid,
         lat,
         lon,
         datetimeinit: record.datetimeinit,
         status: record.status,
         description: record.description || "",
-        address: record.address || "",
+        address: record.probaddress || record.address || "",
       };
     })
     .filter((record): record is DumpingRequest => record !== null)

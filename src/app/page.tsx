@@ -79,6 +79,9 @@ export default function Home() {
         setWeeklyData(weeklyDataResponse.weeklyData);
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
+        setStats(null);
+        setRequests([]);
+        setWeeklyData([]);
         setError(err instanceof Error ? err.message : "An error occurred");
         console.error("Error fetching data:", err);
       } finally {
