@@ -1,0 +1,14 @@
+[project]
+name = "illegal-dumping-map"
+version = "0.1.0"
+description = "Analyze and visualize illegal dumping requests from Oakland's 311 service data"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "plotly",
+    "python-dotenv",
+    "sodapy",
+]
