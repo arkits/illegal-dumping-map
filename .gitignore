@@ -24,3 +24,5 @@ env/
 Thumbs.db
 .next/
 node_modules/
+.env.local
+convex/_generated/

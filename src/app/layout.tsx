@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ConvexClientProvider } from "./ConvexClientProvider";
 import "./globals.css";
 
 const nunito = Nunito({ subsets: ["latin"] });
@@ -18,9 +19,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={nunito.className}>
-        <ThemeProvider>
-          {children}
-        </ThemeProvider>
+        <ConvexClientProvider>
+          <ThemeProvider>
+            {children}
+          </ThemeProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

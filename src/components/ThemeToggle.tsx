@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useEffect, useState } from "react";
 
@@ -20,9 +21,24 @@ export default function ThemeToggle() {
     );
   }
 
+  const handleThemeToggle = () => {
+    Sentry.startSpan(
+      {
+        op: "ui.click",
+        name: "Theme Toggle Click",
+      },
+      (span) => {
+        const newTheme = theme === "light" ? "dark" : "light";
+        span.setAttribute("currentTheme", theme);
+        span.setAttribute("newTheme", newTheme);
+        toggleTheme();
+      },
+    );
+  };
+
   return (
     <button
-      onClick={toggleTheme}
+      onClick={handleThemeToggle}
       className="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
       aria-label="Toggle dark mode"
     >

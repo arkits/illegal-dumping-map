@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Stats from "@/components/Stats";
@@ -91,49 +92,89 @@ export default function LosAngelesPage() {
     const controller = new AbortController();
 
     async function fetchData() {
-      setLoading(true);
-      setError(null);
+      return Sentry.startSpan(
+        {
+          op: "function",
+          name: "Fetch City Data",
+        },
+        async (span) => {
+          setLoading(true);
+          setError(null);
 
-      try {
-        const [statsRes, requestsRes, weeklyRes] = await Promise.all([
-          fetch(`/api/stats?cityId=${cityId}&year=${currentYear}&compareYear=${currentYear - 1}`, {
-            signal: controller.signal,
-          }),
-          fetch(`/api/requests?cityId=${cityId}&year=${currentYear}&limit=5000`, {
-            signal: controller.signal,
-          }),
-          fetch(`/api/weekly?cityId=${cityId}&years=${currentYear},${currentYear - 1}`, {
-            signal: controller.signal,
-          }),
-        ]);
+          span.setAttribute("cityId", cityId);
+          span.setAttribute("year", currentYear);
 
-        if (!statsRes.ok || !requestsRes.ok || !weeklyRes.ok) {
-          throw new Error("Failed to fetch data");
+          try {
+            const [statsRes, requestsRes, weeklyRes] = await Promise.all([
+              Sentry.startSpan(
+                {
+                  op: "http.client",
+                  name: `GET /api/stats?cityId=${cityId}&year=${currentYear}`,
+                },
+                async () => {
+                  return fetch(`/api/stats?cityId=${cityId}&year=${currentYear}&compareYear=${currentYear - 1}`, {
+                    signal: controller.signal,
+                  });
+                }
+              ),
+              Sentry.startSpan(
+                {
+                  op: "http.client",
+                  name: `GET /api/requests?cityId=${cityId}&year=${currentYear}`,
+                },
+                async () => {
+                  return fetch(`/api/requests?cityId=${cityId}&year=${currentYear}&limit=5000`, {
+                    signal: controller.signal,
+                  });
+                }
+              ),
+              Sentry.startSpan(
+                {
+                  op: "http.client",
+                  name: `GET /api/weekly?cityId=${cityId}&years=${currentYear},${currentYear - 1}`,
+                },
+                async () => {
+                  return fetch(`/api/weekly?cityId=${cityId}&years=${currentYear},${currentYear - 1}`, {
+                    signal: controller.signal,
+                  });
+                }
+              ),
+            ]);
+
+            if (!statsRes.ok || !requestsRes.ok || !weeklyRes.ok) {
+              throw new Error("Failed to fetch data");
+            }
+
+            const [statsData, requestsData, weeklyDataResponse] = await Promise.all([
+              statsRes.json(),
+              requestsRes.json(),
+              weeklyRes.json(),
+            ]);
+
+            if (controller.signal.aborted) return;
+
+            span.setAttribute("statsLoaded", true);
+            span.setAttribute("requestsCount", requestsData.requests?.length || 0);
+            span.setAttribute("weeklyDataCount", weeklyDataResponse.weeklyData?.length || 0);
+
+            setStats(statsData);
+            setRequests(requestsData.requests);
+            setWeeklyData(weeklyDataResponse.weeklyData);
+          } catch (err) {
+            if (err instanceof Error && err.name === "AbortError") return;
+            setStats(null);
+            setRequests([]);
+            setWeeklyData([]);
+            setError(err instanceof Error ? err.message : "An error occurred");
+            console.error("Error fetching data:", err);
+            Sentry.captureException(err);
+          } finally {
+            if (!controller.signal.aborted) {
+              setLoading(false);
+            }
+          }
         }
-
-        const [statsData, requestsData, weeklyDataResponse] = await Promise.all([
-          statsRes.json(),
-          requestsRes.json(),
-          weeklyRes.json(),
-        ]);
-
-        if (controller.signal.aborted) return;
-
-        setStats(statsData);
-        setRequests(requestsData.requests);
-        setWeeklyData(weeklyDataResponse.weeklyData);
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") return;
-        setStats(null);
-        setRequests([]);
-        setWeeklyData([]);
-        setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching data:", err);
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
+      );
     }
 
     fetchData();

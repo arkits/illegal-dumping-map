@@ -1,5 +1,6 @@
 "use client";
 
+import * as Sentry from "@sentry/nextjs";
 import { useState, useEffect, useCallback } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import MultiYearWeeklyChart from "@/components/MultiYearWeeklyChart";
@@ -26,37 +27,67 @@ export default function WeeklyTrendsPage() {
   const cities = Object.values(CITIES);
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    return Sentry.startSpan(
+      {
+        op: "function",
+        name: "Fetch Weekly Data",
+      },
+      async (span) => {
+        setLoading(true);
+        setError(null);
 
-    try {
-      const [yearsRes, weeklyRes] = await Promise.all([
-        fetch(`/api/years?cityId=${selectedCity}`),
-        fetch(`/api/weekly?cityId=${selectedCity}&all=true`),
-      ]);
+        span.setAttribute("cityId", selectedCity);
 
-      if (!yearsRes.ok || !weeklyRes.ok) {
-        throw new Error("Failed to fetch data");
+        try {
+          const [yearsRes, weeklyRes] = await Promise.all([
+            Sentry.startSpan(
+              {
+                op: "http.client",
+                name: `GET /api/years?cityId=${selectedCity}`,
+              },
+              async () => {
+                return fetch(`/api/years?cityId=${selectedCity}`);
+              }
+            ),
+            Sentry.startSpan(
+              {
+                op: "http.client",
+                name: `GET /api/weekly?cityId=${selectedCity}&all=true`,
+              },
+              async () => {
+                return fetch(`/api/weekly?cityId=${selectedCity}&all=true`);
+              }
+            ),
+          ]);
+
+          if (!yearsRes.ok || !weeklyRes.ok) {
+            throw new Error("Failed to fetch data");
+          }
+
+          const [yearsData, weeklyResponse] = await Promise.all([
+            yearsRes.json(),
+            weeklyRes.json(),
+          ]);
+
+          const years = yearsData.years || [];
+          span.setAttribute("yearsCount", years.length);
+          span.setAttribute("weeklyDataCount", weeklyResponse.weeklyData?.length || 0);
+
+          setAvailableYears(years);
+          setSelectedYears(years);
+          setWeeklyData(weeklyResponse.weeklyData || []);
+        } catch (err) {
+          setAvailableYears([]);
+          setSelectedYears([]);
+          setWeeklyData([]);
+          setError(err instanceof Error ? err.message : "An error occurred");
+          console.error("Error fetching data:", err);
+          Sentry.captureException(err);
+        } finally {
+          setLoading(false);
+        }
       }
-
-      const [yearsData, weeklyResponse] = await Promise.all([
-        yearsRes.json(),
-        weeklyRes.json(),
-      ]);
-
-      const years = yearsData.years || [];
-      setAvailableYears(years);
-      setSelectedYears(years);
-      setWeeklyData(weeklyResponse.weeklyData || []);
-    } catch (err) {
-      setAvailableYears([]);
-      setSelectedYears([]);
-      setWeeklyData([]);
-      setError(err instanceof Error ? err.message : "An error occurred");
-      console.error("Error fetching data:", err);
-    } finally {
-      setLoading(false);
-    }
+    );
   }, [selectedCity]);
 
   useEffect(() => {
@@ -82,7 +113,20 @@ export default function WeeklyTrendsPage() {
             <div className="flex items-center gap-4">
               <select
                 value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value as CityId)}
+                onChange={(e) => {
+                  Sentry.startSpan(
+                    {
+                      op: "ui.change",
+                      name: "City Selection Change",
+                    },
+                    (span) => {
+                      const newCityId = e.target.value as CityId;
+                      span.setAttribute("oldCityId", selectedCity);
+                      span.setAttribute("newCityId", newCityId);
+                      setSelectedCity(newCityId);
+                    }
+                  );
+                }}
                 className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {cities.map((city) => (
