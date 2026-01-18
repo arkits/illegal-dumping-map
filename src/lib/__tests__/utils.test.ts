@@ -155,11 +155,17 @@ describe('WGS84 vs Web Mercator detection', () => {
   });
 
   it('should handle edge cases for coordinate detection', () => {
-    expect(-180 >= -180 && -180 <= 180).toBe(true);
-    expect(180 >= -180 && 180 <= 180).toBe(true);
-    expect(-90 >= -90 && -90 <= 90).toBe(true);
-    expect(90 >= -90 && 90 <= 90).toBe(true);
-    expect(-181 >= -180 && -181 <= 180).toBe(false);
-    expect(181 >= -180 && 181 <= 180).toBe(false);
+    const val1 = -180;
+    expect(val1 >= -180 && val1 <= 180).toBe(true);
+    const val2 = 180;
+    expect(val2 >= -180 && val2 <= 180).toBe(true);
+    const val3 = -90;
+    expect(val3 >= -90 && val3 <= 90).toBe(true);
+    const val4 = 90;
+    expect(val4 >= -90 && val4 <= 90).toBe(true);
+    const val5 = -181;
+    expect(val5 >= -180 && val5 <= 180).toBe(false);
+    const val6 = 181;
+    expect(val6 >= -180 && val6 <= 180).toBe(false);
   });
 });

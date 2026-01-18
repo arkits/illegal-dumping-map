@@ -1,4 +1,8 @@
 # IMPORTANT
 
-- Use `bun` instead of `npm`
-- Ensure `bun run build` and `bun run lint` passes without any issues
+* Use `bun` instead of `npm`
+
+* Ensure the command pass without any issues
+  * `bun run build`
+  * `bun run lint`
+  * `bun run test`
