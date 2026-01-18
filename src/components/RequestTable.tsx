@@ -6,9 +6,11 @@ import { DumpingRequest } from "@/lib/utils";
 
 interface RequestTableProps {
   requests: DumpingRequest[];
+  onRequestClick?: (id: string) => void;
+  selectedRequestId?: string | null;
 }
 
-export default function RequestTable({ requests }: RequestTableProps) {
+export default function RequestTable({ requests, onRequestClick, selectedRequestId }: RequestTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
 
   const rowVirtualizer = useVirtualizer({
@@ -58,11 +60,16 @@ export default function RequestTable({ requests }: RequestTableProps) {
               return (
                 <div
                   key={request.id}
-                  className="absolute top-0 left-0 w-full grid grid-cols-[70px_1fr_90px_80px] gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 items-center"
+                  className={`absolute top-0 left-0 w-full grid grid-cols-[70px_1fr_90px_80px] gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 items-center cursor-pointer ${
+                    selectedRequestId === request.id
+                      ? "bg-blue-50 dark:bg-blue-900/30"
+                      : ""
+                  }`}
                   style={{
                     height: `${virtualItem.size}px`,
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
+                  onClick={() => onRequestClick?.(request.id)}
                 >
                   <div className="flex-shrink-0 text-xs text-gray-900 dark:text-white truncate" title={request.id}>
                     {request.id}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchDumpingRequests } from "@/lib/socrata";
-import { getWeekNumber } from "@/lib/utils";
+import { fetchDumpingRequests, CITIES } from "@/lib/socrata";
+import { getWeekNumber, CityId } from "@/lib/utils";
 
 interface WeeklyData {
   week: number;
@@ -11,6 +11,12 @@ interface WeeklyData {
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const currentYear = new Date().getFullYear();
+
+  const cityIdParam = searchParams.get("cityId");
+  const cityId = (cityIdParam && cityIdParam in CITIES
+    ? cityIdParam
+    : "oakland") as CityId;
+
   const yearsParam = searchParams.get("years");
   const allYearsParam = searchParams.get("all");
 
@@ -32,8 +38,8 @@ export async function GET(request: NextRequest) {
     const allWeeklyData: WeeklyData[] = [];
 
     for (const year of years) {
-      const requests = await fetchDumpingRequests({ year, limit: 100000 });
-      
+      const requests = await fetchDumpingRequests({ cityId, year, limit: 100000 });
+
       const weeklyCounts: Record<number, number> = {};
       for (let i = 1; i <= 53; i++) {
         weeklyCounts[i] = 0;
@@ -58,7 +64,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ weeklyData: allWeeklyData });
+    return NextResponse.json({ weeklyData: allWeeklyData, cityId });
   } catch (error) {
     console.error("Error fetching weekly data:", error);
     return NextResponse.json(

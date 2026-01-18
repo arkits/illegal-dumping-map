@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchDumpingRequests } from "@/lib/socrata";
+import { fetchDumpingRequests, CITIES } from "@/lib/socrata";
+import { CityId } from "@/lib/utils";
 
 const getWeekNumberForDate = (date: Date): number => {
   const start = new Date(date.getFullYear(), 0, 1);
@@ -13,6 +14,12 @@ const weeksInYear = (year: number): number => {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
+
+  const cityIdParam = searchParams.get("cityId");
+  const cityId = (cityIdParam && cityIdParam in CITIES
+    ? cityIdParam
+    : "oakland") as CityId;
+
   const yearParam = searchParams.get("year");
   const compareParam = searchParams.get("compareYear");
   const parsedYear = yearParam ? Number.parseInt(yearParam, 10) : NaN;
@@ -21,12 +28,12 @@ export async function GET(request: NextRequest) {
   const compareYear = Number.isFinite(parsedCompare) ? parsedCompare : year - 1;
 
   try {
-    const currentYearRequests = await fetchDumpingRequests({ year, countOnly: true });
-    const previousYearRequests = await fetchDumpingRequests({ year: compareYear, countOnly: true });
+    const currentYearRequests = await fetchDumpingRequests({ cityId, year, countOnly: true });
+    const previousYearRequests = await fetchDumpingRequests({ cityId, year: compareYear, countOnly: true });
 
     const totalRequests = parseInt(currentYearRequests[0]?.id || "0", 10);
     const previousTotal = parseInt(previousYearRequests[0]?.id || "0", 10);
-    
+
     const now = new Date();
     const weeksCurrent =
       year < now.getFullYear() ? weeksInYear(year) : Math.max(1, getWeekNumberForDate(now));
@@ -49,6 +56,7 @@ export async function GET(request: NextRequest) {
       changePercent: Math.round(changePercent * 10) / 10,
       year,
       compareYear,
+      cityId,
     });
   } catch (error) {
     console.error("Error fetching stats:", error);

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import MultiYearWeeklyChart from "@/components/MultiYearWeeklyChart";
+import { CITIES, CityId } from "@/lib/utils";
 
 interface WeeklyData {
   week: number;
@@ -16,6 +17,9 @@ export default function WeeklyTrendsPage() {
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState<CityId>("oakland");
+
+  const cities = Object.values(CITIES);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -23,8 +27,8 @@ export default function WeeklyTrendsPage() {
 
     try {
       const [yearsRes, weeklyRes] = await Promise.all([
-        fetch("/api/years"),
-        fetch("/api/weekly?all=true"),
+        fetch(`/api/years?cityId=${selectedCity}`),
+        fetch(`/api/weekly?cityId=${selectedCity}&all=true`),
       ]);
 
       if (!yearsRes.ok || !weeklyRes.ok) {
@@ -49,7 +53,7 @@ export default function WeeklyTrendsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedCity]);
 
   useEffect(() => {
     fetchData();
@@ -57,24 +61,37 @@ export default function WeeklyTrendsPage() {
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
               <a
                 href="/"
                 className="text-sm text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
               >
-                ← Back to Map
+                ← Back
               </a>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Weekly Trends Analysis
               </h1>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-4">
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value as CityId)}
+                className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {cities.map((city) => (
+                  <option key={city.id} value={city.id}>
+                    {city.name}
+                  </option>
+                ))}
+              </select>
+              <ThemeToggle />
+            </div>
           </div>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Compare illegal dumping request patterns across multiple years
+            Compare illegal dumping request patterns across multiple years for {cities.find(c => c.id === selectedCity)?.name}
           </p>
         </div>
 
@@ -89,7 +106,7 @@ export default function WeeklyTrendsPage() {
             Weekly Request Trends
           </h2>
           {loading ? (
-            <div className="h-80 bg-gray-100 dark:bg-gray-700 animate-pulse rounded"></div>
+            <div className="h-96 bg-gray-100 dark:bg-gray-700 animate-pulse rounded"></div>
           ) : (
             <MultiYearWeeklyChart
               data={weeklyData}
@@ -104,12 +121,12 @@ export default function WeeklyTrendsPage() {
           <p>
             Data source:{" "}
             <a
-              href="https://data.oaklandca.gov/"
+              href={selectedCity === "oakland" ? "https://data.oaklandca.gov/" : "https://data.sfgov.org/"}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 dark:text-blue-400 hover:underline"
             >
-              Oakland Open Data Portal
+              {selectedCity === "oakland" ? "Oakland Open Data Portal" : "DataSF"}
             </a>{" "}
             (311 Service Requests)
           </p>

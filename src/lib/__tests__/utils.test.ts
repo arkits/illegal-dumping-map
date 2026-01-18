@@ -5,6 +5,13 @@ import {
   getWeekNumber,
   OAKLAND_CENTER_LAT,
   OAKLAND_CENTER_LON,
+  SF_CENTER_LAT,
+  SF_CENTER_LON,
+  isWGS84,
+  filterInvalidCoordinates,
+  CITIES,
+  getCityConfig,
+  CityId,
 } from '../utils';
 
 describe('webMercatorToWGS84', () => {
@@ -128,30 +135,37 @@ describe('coordinate constants', () => {
     expect(OAKLAND_CENTER_LON).toBeLessThan(-122);
     expect(OAKLAND_CENTER_LON).toBeGreaterThan(-123);
   });
+
+  it('should have valid SF center coordinates', () => {
+    expect(SF_CENTER_LAT).toBeGreaterThan(37);
+    expect(SF_CENTER_LAT).toBeLessThan(38);
+    expect(SF_CENTER_LON).toBeLessThan(-122);
+    expect(SF_CENTER_LON).toBeGreaterThan(-123);
+  });
 });
 
 describe('WGS84 vs Web Mercator detection', () => {
   it('should correctly identify WGS84 coordinates (degrees)', () => {
     const srx = -122.27971489920458;
     const sry = 37.812345;
-    const isWGS84 = srx >= -180 && srx <= 180 && sry >= -90 && sry <= 90;
-    expect(isWGS84).toBe(true);
+    const isWGS84Coords = srx >= -180 && srx <= 180 && sry >= -90 && sry <= 90;
+    expect(isWGS84Coords).toBe(true);
   });
 
   it('should correctly identify Web Mercator coordinates (meters)', () => {
     const srx = -13610886.6;
     const sry = 4551848.6;
-    const isWGS84 = srx >= -180 && srx <= 180 && sry >= -90 && sry <= 90;
-    expect(isWGS84).toBe(false);
+    const isWGS84Coords = srx >= -180 && srx <= 180 && sry >= -90 && sry <= 90;
+    expect(isWGS84Coords).toBe(false);
   });
 
   it('should correctly identify invalid coordinates', () => {
     const srx = 1356837.439;
     const sry = 6118176.538;
     const isValid = srx > -18000000 && srx <= 180;
-    const isWGS84 = srx >= -180 && srx <= 180 && sry >= -90 && sry <= 90;
+    const isWGS84Coords = srx >= -180 && srx <= 180 && sry >= -90 && sry <= 90;
     expect(isValid).toBe(false);
-    expect(isWGS84).toBe(false);
+    expect(isWGS84Coords).toBe(false);
   });
 
   it('should handle edge cases for coordinate detection', () => {
@@ -167,5 +181,99 @@ describe('WGS84 vs Web Mercator detection', () => {
     expect(val5 >= -180 && val5 <= 180).toBe(false);
     const val6 = 181;
     expect(val6 >= -180 && val6 <= 180).toBe(false);
+  });
+});
+
+describe('City Configuration', () => {
+  describe('CITIES constant', () => {
+    it('should have oakland city', () => {
+      expect(CITIES.oakland).toBeDefined();
+      expect(CITIES.oakland.id).toBe('oakland');
+      expect(CITIES.oakland.name).toBe('Oakland');
+      expect(CITIES.oakland.domain).toBe('data.oaklandca.gov');
+      expect(CITIES.oakland.datasetId).toBe('quth-gb8e');
+      expect(CITIES.oakland.filterField).toBe('REQCATEGORY');
+      expect(CITIES.oakland.filterValue).toBe('ILLDUMP');
+      expect(CITIES.oakland.requiresCoordinateConversion).toBe(true);
+    });
+
+    it('should have sanfrancisco city', () => {
+      expect(CITIES.sanfrancisco).toBeDefined();
+      expect(CITIES.sanfrancisco.id).toBe('sanfrancisco');
+      expect(CITIES.sanfrancisco.name).toBe('San Francisco');
+      expect(CITIES.sanfrancisco.domain).toBe('data.sfgov.org');
+      expect(CITIES.sanfrancisco.datasetId).toBe('vw6y-z8j6');
+      expect(CITIES.sanfrancisco.filterField).toBe('service_details');
+      expect(CITIES.sanfrancisco.filterValue).toBe('trash_dumping');
+      expect(CITIES.sanfrancisco.requiresCoordinateConversion).toBe(false);
+    });
+
+    it('should have unique colors for each city', () => {
+      const colors = new Set(Object.values(CITIES).map((c) => c.color));
+      expect(colors.size).toBe(Object.keys(CITIES).length);
+    });
+  });
+
+  describe('getCityConfig', () => {
+    it('should return config for valid city', () => {
+      const config = getCityConfig('oakland');
+      expect(config.id).toBe('oakland');
+    });
+
+    it('should return config for sanfrancisco', () => {
+      const config = getCityConfig('sanfrancisco');
+      expect(config.id).toBe('sanfrancisco');
+    });
+
+    it('should throw for invalid city', () => {
+      expect(() => getCityConfig('invalid' as CityId)).toThrow('Unknown city: invalid');
+    });
+  });
+});
+
+describe('isWGS84', () => {
+  it('should return true for valid WGS84 coordinates', () => {
+    expect(isWGS84(-122.4194, 37.7749)).toBe(true);
+    expect(isWGS84(-122.272, 37.804747)).toBe(true);
+    expect(isWGS84(0, 0)).toBe(true);
+    expect(isWGS84(180, 90)).toBe(true);
+    expect(isWGS84(-180, -90)).toBe(true);
+  });
+
+  it('should return false for Web Mercator coordinates', () => {
+    expect(isWGS84(-13611256.78, 4551879.71)).toBe(false);
+    expect(isWGS84(-13610886.6, 4551848.6)).toBe(false);
+  });
+
+  it('should return false for invalid coordinates', () => {
+    expect(isWGS84(1356837.439, 6118176.538)).toBe(false);
+    expect(isWGS84(-136108866666, 45518486666)).toBe(false);
+  });
+});
+
+describe('filterInvalidCoordinates', () => {
+  it('should accept valid WGS84 coordinates', () => {
+    expect(filterInvalidCoordinates(-122.4194, 37.7749)).toBe(true);
+    expect(filterInvalidCoordinates(-122.272, 37.804747)).toBe(true);
+  });
+
+  it('should accept valid Web Mercator coordinates', () => {
+    expect(filterInvalidCoordinates(-13611256.78, 4551879.71)).toBe(true);
+  });
+
+  it('should reject zero coordinates', () => {
+    expect(filterInvalidCoordinates(0, 0)).toBe(false);
+  });
+
+  it('should reject corrupted coordinates', () => {
+    expect(filterInvalidCoordinates(1356837.439, 6118176.538)).toBe(false);
+    expect(filterInvalidCoordinates(-136108866666, 45518486666)).toBe(false);
+  });
+
+  it('should reject invalid WGS84 out of range', () => {
+    expect(isWGS84(181, 0)).toBe(false);
+    expect(isWGS84(-181, 0)).toBe(false);
+    expect(isWGS84(0, 91)).toBe(false);
+    expect(isWGS84(0, -91)).toBe(false);
   });
 });

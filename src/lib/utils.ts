@@ -1,21 +1,56 @@
+export const CITIES = {
+  oakland: {
+    id: "oakland",
+    route: "/oakland",
+    name: "Oakland",
+    domain: "data.oaklandca.gov",
+    datasetId: "quth-gb8e",
+    filterField: "REQCATEGORY",
+    filterValue: "ILLDUMP",
+    dateField: "DATETIMEINIT",
+    addressField: "probaddress",
+    descriptionField: "description",
+    centerLat: 37.804747,
+    centerLon: -122.272,
+    requiresCoordinateConversion: true,
+    color: "blue",
+  },
+  sanfrancisco: {
+    id: "sanfrancisco",
+    route: "/san-francisco",
+    name: "San Francisco",
+    domain: "data.sfgov.org",
+    datasetId: "vw6y-z8j6",
+    filterField: "service_details",
+    filterValue: "trash_dumping",
+    dateField: "requested_datetime",
+    addressField: "address",
+    descriptionField: "service_subtype",
+    centerLat: 37.7749,
+    centerLon: -122.4194,
+    requiresCoordinateConversion: false,
+    color: "red",
+  },
+} as const;
+
+export type CityId = keyof typeof CITIES;
+
+export function getCityConfig(cityId: CityId) {
+  const config = CITIES[cityId];
+  if (!config) {
+    throw new Error(`Unknown city: ${cityId}`);
+  }
+  return config;
+}
+
 export const OAKLAND_DOMAIN = "data.oaklandca.gov";
 export const DATASET_ID = "quth-gb8e";
 export const EARTH_RADIUS_METERS = 6378137;
 export const OAKLAND_CENTER_LAT = 37.804747;
 export const OAKLAND_CENTER_LON = -122.272;
+export const SF_CENTER_LAT = 37.7749;
+export const SF_CENTER_LON = -122.4194;
 
-/**
- * Converts Web Mercator (EPSG:3857) coordinates to WGS84 (EPSG:4326) coordinates.
- * 
- * @param x - Web Mercator X coordinate in meters (EPSG:3857)
- * @param y - Web Mercator Y coordinate in meters (EPSG:3857)
- * @returns A tuple of [latitude, longitude] in degrees (WGS84)
- * 
- * @remarks
- * The inputs x and y are Web Mercator coordinates in meters, not degrees.
- * The function uses EARTH_RADIUS_METERS as the assumed sphere radius and
- * converts radians to degrees using radToDeg.
- */
 export function webMercatorToWGS84(x: number, y: number): [number, number] {
   const lonRad = x / EARTH_RADIUS_METERS;
   const latRad = 2 * Math.atan(Math.exp(y / EARTH_RADIUS_METERS)) - Math.PI / 2;
@@ -27,13 +62,10 @@ function radToDeg(rad: number): number {
   return rad * (180 / Math.PI);
 }
 
-/**
- * Calculates the distance between two WGS84 coordinates using the Haversine formula.
- * 
- * @param coord1 - First coordinate as [latitude, longitude] in degrees
- * @param coord2 - Second coordinate as [latitude, longitude] in degrees
- * @returns Distance in kilometers
- */
+export function degToRad(deg: number): number {
+  return deg * (Math.PI / 180);
+}
+
 export function distBetweenLatLon(
   coord1: [number, number],
   coord2: [number, number]
@@ -54,10 +86,6 @@ export function distBetweenLatLon(
   return (EARTH_RADIUS_METERS * c) / 1000;
 }
 
-function degToRad(deg: number): number {
-  return deg * (Math.PI / 180);
-}
-
 export function getWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
@@ -74,4 +102,19 @@ export interface DumpingRequest {
   status: string;
   description: string;
   address: string;
+  cityId?: CityId;
+}
+
+export function isWGS84(x: number, y: number): boolean {
+  return x >= -180 && x <= 180 && y >= -90 && y <= 90;
+}
+
+export function isValidWebMercator(x: number): boolean {
+  return x < 0 && x >= -18000000;
+}
+
+export function filterInvalidCoordinates(x: number, y: number): boolean {
+  if (x === 0 && y === 0) return false;
+  if (!isWGS84(x, y) && !isValidWebMercator(x)) return false;
+  return true;
 }
