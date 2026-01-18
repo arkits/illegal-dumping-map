@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
   const compareYear = Number.isFinite(parsedCompare) ? parsedCompare : year - 1;
 
   try {
-    const currentYearRequests = await fetchDumpingRequests({ year, limit: 100000 });
-    const previousYearRequests = await fetchDumpingRequests({ year: compareYear, limit: 100000 });
+    const currentYearRequests = await fetchDumpingRequests({ year, countOnly: true });
+    const previousYearRequests = await fetchDumpingRequests({ year: compareYear, countOnly: true });
 
-    const totalRequests = currentYearRequests.length;
-    const previousTotal = previousYearRequests.length;
+    const totalRequests = parseInt(currentYearRequests[0]?.id || "0", 10);
+    const previousTotal = parseInt(previousYearRequests[0]?.id || "0", 10);
     
     const now = new Date();
     const weeksCurrent =

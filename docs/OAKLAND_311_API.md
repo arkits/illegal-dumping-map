@@ -28,7 +28,7 @@ This uses Socrata SODA 2.0 API.
 
 | Field Name | Type | Description |
 |------------|------|-------------|
-| `requestid` | number | The service request number. 5-digit IDs were imported from Recycling Hotline's prior system (pre-Aug 2012). All others are 6 digits. |
+| `requestid` | text | The service request number. Primary identifier for each request. |
 | `datetimeinit` | calendar_date | The date and time the request was initiated. Format: `YYYY-MM-DDTHH:MM:SS.sss` |
 | `source` | text | How the request was received: SeeClickFix, OAK 311 mobile app, Report A Problem website, or Phone/Email |
 | `description` | text | Type of issue. Self-explanatory descriptions with special codes (e.g., "TE" = Traffic Engineering) |
