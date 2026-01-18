@@ -26,7 +26,7 @@ export default function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
   
   if (years.length === 0) {
     return (
-      <div className="w-full h-80 flex items-center justify-center text-sm text-gray-500">
+      <div className="w-full h-40 flex items-center justify-center text-xs text-gray-500">
         No weekly data available
       </div>
     );
@@ -48,27 +48,28 @@ export default function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
   });
 
   return (
-    <div className="w-full h-80">
+    <div className="w-full h-40">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart
           data={chartData}
-          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
           <XAxis
             dataKey="week"
-            tick={{ fontSize: 10 }}
-            interval={4}
+            tick={{ fontSize: 9 }}
+            interval={12}
           />
-          <YAxis tick={{ fontSize: 12 }} />
+          <YAxis tick={{ fontSize: 10 }} width={30} />
           <Tooltip
             contentStyle={{
               backgroundColor: "#fff",
               border: "1px solid #e5e7eb",
               borderRadius: "8px",
+              fontSize: "12px",
             }}
           />
-          <Legend />
+          <Legend wrapperStyle={{ fontSize: "11px" }} />
           <Line
             type="monotone"
             dataKey={currentYear}
@@ -76,7 +77,7 @@ export default function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
             stroke="#3b82f6"
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 6 }}
+            activeDot={{ r: 4 }}
           />
           {previousYear != null && (
             <Line
@@ -86,7 +87,7 @@ export default function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
               stroke="#f97316"
               strokeWidth={2}
               dot={false}
-              activeDot={{ r: 6 }}
+              activeDot={{ r: 4 }}
             />
           )}
         </LineChart>

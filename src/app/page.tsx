@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import Stats from "@/components/Stats";
 import WeeklyTrendsChart from "@/components/WeeklyTrendsChart";
@@ -12,8 +12,10 @@ import { DumpingRequest } from "@/lib/utils";
 const RequestMap = dynamic(() => import("@/components/RequestMap"), {
   ssr: false,
   loading: () => (
-    <div className="h-full w-full bg-gray-100 flex items-center justify-center">
-      <p>Loading map...</p>
+    <div className="h-full w-full bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
+      <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+      <p className="text-gray-700 dark:text-gray-300 font-medium">Loading data...</p>
+      <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">may take a second</p>
     </div>
   ),
 });
@@ -41,6 +43,41 @@ export default function Home() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [sidebarWidth, setSidebarWidth] = useState(33);
+  const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
+      
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+      
+      const clampedWidth = Math.min(Math.max(newWidth, 15), 60);
+      setSidebarWidth(clampedWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -96,75 +133,109 @@ export default function Home() {
   }, [currentYear]);
 
   return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Oakland Illegal Dumping Map
-              </h1>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">
-                Visualize and analyze illegal dumping requests from Oakland&apos;s 311 service data
+    <main className="h-screen w-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
+      <header className="flex-shrink-0 px-4 py-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between max-w-none mx-auto">
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">
+              Oakland Illegal Dumping Map
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            <a
+              href="/weekly"
+              className="px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors whitespace-nowrap"
+            >
+              Weekly Trends →
+            </a>
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden" ref={containerRef}>
+        <aside 
+          className="flex-shrink-0 bg-white dark:bg-gray-800 border-b lg:border-b-0 lg:border-r border-gray-200 dark:border-gray-700 overflow-y-auto"
+          style={{ width: isDragging ? undefined : `${sidebarWidth}%` }}
+        >
+          <div className="p-4 space-y-4">
+            {error && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            )}
+
+            <Stats stats={stats} loading={loading} />
+
+            <div className="space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                  Weekly Trends ({currentYear} vs {currentYear - 1})
+                </h2>
+                {loading ? (
+                  <div className="space-y-2">
+                    <div className="h-8 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                    <div className="h-28 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                ) : (
+                  <WeeklyTrendsChart data={weeklyData} />
+                )}
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                  Request Distribution
+                </h2>
+                {loading ? (
+                  <div className="space-y-2">
+                    <div className="h-8 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                    <div className="h-28 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                ) : (
+                  <RequestDistribution requests={requests} />
+                )}
+              </div>
+
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+                {loading ? (
+                  <div className="h-[400px] bg-gray-100 dark:bg-gray-700 animate-pulse"></div>
+                ) : (
+                  <RequestTable requests={requests} />
+                )}
+              </div>
+            </div>
+
+            <div className="text-center text-xs text-gray-500 dark:text-gray-400 py-2">
+              <p>
+                Data:{" "}
+                <a
+                  href="https://data.oaklandca.gov/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Oakland Open Data
+                </a>
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <a
-                href="/weekly"
-                className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-              >
-                Weekly Trends →
-              </a>
-              <ThemeToggle />
-            </div>
           </div>
-        </div>
+        </aside>
 
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-red-600 dark:text-red-400">{error}</p>
-          </div>
-        )}
+        <div
+          onMouseDown={handleMouseDown}
+          className={`hidden lg:block w-1 flex-shrink-0 cursor-col-resize bg-gray-300 dark:bg-gray-600 hover:bg-blue-500 dark:hover:bg-blue-500 transition-colors ${
+            isDragging ? 'bg-blue-500' : ''
+          }`}
+          style={{ cursor: isDragging ? 'col-resize' : undefined }}
+        />
 
-        <Stats stats={stats} loading={loading} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Weekly Trends ({currentYear} vs {currentYear - 1})
-            </h2>
+        <section className="flex-1 bg-gray-100 dark:bg-gray-900 relative">
+          <div className="absolute inset-0">
             {loading ? (
-              <div className="h-80 bg-gray-100 dark:bg-gray-700 animate-pulse rounded"></div>
-            ) : (
-              <WeeklyTrendsChart data={weeklyData} />
-            )}
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Request Distribution
-            </h2>
-            {loading ? (
-              <div className="h-80 bg-gray-100 dark:bg-gray-700 animate-pulse rounded"></div>
-            ) : (
-              <RequestDistribution requests={requests} />
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Interactive Map
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              Click on markers to see details. Scroll to zoom, drag to pan.
-            </p>
-          </div>
-          <div className="h-[600px]">
-            {loading ? (
-              <div className="h-full w-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <p className="text-gray-600 dark:text-gray-300">Loading map...</p>
+              <div className="h-full w-full bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
+                <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-700 dark:text-gray-300 font-medium">Loading data...</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">may take a second</p>
               </div>
             ) : (
               <RequestMap
@@ -174,36 +245,7 @@ export default function Home() {
               />
             )}
           </div>
-        </div>
-
-        <div className="mt-8">
-          {loading ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-2"></div>
-              </div>
-              <div className="h-96 bg-gray-100 dark:bg-gray-700 animate-pulse"></div>
-            </div>
-          ) : (
-            <RequestTable requests={requests} />
-          )}
-        </div>
-
-        <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>
-            Data source:{" "}
-            <a
-              href="https://data.oaklandca.gov/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Oakland Open Data Portal
-            </a>{" "}
-            (311 Service Requests)
-          </p>
-        </div>
+        </section>
       </div>
     </main>
   );

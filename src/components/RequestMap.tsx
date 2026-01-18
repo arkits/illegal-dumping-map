@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { DumpingRequest } from "@/lib/utils";
@@ -78,32 +77,30 @@ export default function RequestMap({ requests, centerLat, centerLon }: MapProps)
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <MapController centerLat={centerLat} centerLon={centerLon} />
-      <MarkerClusterGroup chunkedLoading>
-        {requests.map((request) => (
-          <Marker
-            key={request.id}
-            position={[request.lat, request.lon]}
-            icon={customIcon}
-          >
-            <Popup>
-              <div className="text-sm">
-                <p className="font-semibold">Illegal Dumping Report</p>
-                <p className="text-gray-600">{request.address || "No address available"}</p>
-                <p className="text-gray-500 text-xs mt-1">
-                  {new Date(request.datetimeinit).toLocaleDateString()}
+      {requests.map((request) => (
+        <Marker
+          key={request.id}
+          position={[request.lat, request.lon]}
+          icon={customIcon}
+        >
+          <Popup>
+            <div className="text-sm">
+              <p className="font-semibold">Illegal Dumping Report</p>
+              <p className="text-gray-600">{request.address || "No address available"}</p>
+              <p className="text-gray-500 text-xs mt-1">
+                {new Date(request.datetimeinit).toLocaleDateString()}
+              </p>
+              {request.description && (
+                <p className="mt-1 text-xs">
+                  {request.description.length > 100
+                    ? `${request.description.substring(0, 100)}...`
+                    : request.description}
                 </p>
-                {request.description && (
-                  <p className="mt-1 text-xs">
-                    {request.description.length > 100
-                      ? `${request.description.substring(0, 100)}...`
-                      : request.description}
-                  </p>
-                )}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MarkerClusterGroup>
+              )}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
     </MapContainer>
   );
 }

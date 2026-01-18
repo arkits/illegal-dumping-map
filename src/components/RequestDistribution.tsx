@@ -43,28 +43,29 @@ export default function RequestDistribution({ requests }: RequestDistributionPro
 
   if (total === 0) {
     return (
-      <div className="h-80 bg-gray-100 flex items-center justify-center rounded">
-        <p className="text-gray-500">No requests to display</p>
+      <div className="h-40 bg-gray-100 flex items-center justify-center rounded">
+        <p className="text-xs text-gray-500">No requests to display</p>
       </div>
     );
   }
 
   return (
-    <div className="h-80">
-      <div className="mb-2 text-center text-sm text-gray-500">
+    <div className="h-40">
+      <div className="mb-1 text-center text-xs text-gray-500">
         {total.toLocaleString()} total requests
       </div>
-      <ResponsiveContainer width="100%" height="90%">
-        <BarChart data={data} margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
+      <ResponsiveContainer width="100%" height="85%">
+        <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-          <XAxis dataKey="status" tick={{ fontSize: 12 }} />
-          <YAxis tick={{ fontSize: 12 }} />
+          <XAxis dataKey="status" tick={{ fontSize: 10 }} />
+          <YAxis tick={{ fontSize: 10 }} width={25} />
           <Tooltip
             formatter={(value: number | undefined) => [value ?? 0, "Requests"]}
             contentStyle={{
               backgroundColor: "#fff",
               border: "1px solid #e5e7eb",
               borderRadius: "8px",
+              fontSize: "12px",
             }}
           />
           <Bar dataKey="count" radius={[4, 4, 0, 0]}>
