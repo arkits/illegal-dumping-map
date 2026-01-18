@@ -35,11 +35,11 @@ interface StatsData {
 }
 
 export default function Home() {
+  const currentYear = new Date().getFullYear();
   const [requests, setRequests] = useState<DumpingRequest[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,13 +51,13 @@ export default function Home() {
 
       try {
         const [statsRes, requestsRes, weeklyRes] = await Promise.all([
-          fetch(`/api/stats?year=${selectedYear}&compareYear=${selectedYear - 1}`, {
+          fetch(`/api/stats?year=${currentYear}&compareYear=${currentYear - 1}`, {
             signal: controller.signal,
           }),
-          fetch(`/api/requests?year=${selectedYear}&limit=5000`, {
+          fetch(`/api/requests?year=${currentYear}&limit=5000`, {
             signal: controller.signal,
           }),
-          fetch(`/api/weekly?years=${selectedYear},${selectedYear - 1}`, {
+          fetch(`/api/weekly?years=${currentYear},${currentYear - 1}`, {
             signal: controller.signal,
           }),
         ]);
@@ -93,41 +93,30 @@ export default function Home() {
 
     fetchData();
     return () => controller.abort();
-  }, [selectedYear]);
+  }, [currentYear]);
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Oakland Illegal Dumping Map
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Visualize and analyze illegal dumping requests from Oakland&apos;s 311 service data
-          </p>
-
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <label htmlFor="year-select" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Select Year:
-              </label>
-              <select
-                id="year-select"
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                className="block w-40 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2 border bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-              >
-                {Array.from({ length: 5 }, (_, i) => {
-                  const year = new Date().getFullYear() - i;
-                  return (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  );
-                })}
-              </select>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Oakland Illegal Dumping Map
+              </h1>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">
+                Visualize and analyze illegal dumping requests from Oakland&apos;s 311 service data
+              </p>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-4">
+              <a
+                href="/weekly"
+                className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              >
+                Weekly Trends →
+              </a>
+              <ThemeToggle />
+            </div>
           </div>
         </div>
 
@@ -142,7 +131,7 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Weekly Trends ({selectedYear} vs {selectedYear - 1})
+              Weekly Trends ({currentYear} vs {currentYear - 1})
             </h2>
             {loading ? (
               <div className="h-80 bg-gray-100 dark:bg-gray-700 animate-pulse rounded"></div>

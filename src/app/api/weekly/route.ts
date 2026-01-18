@@ -12,13 +12,21 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const currentYear = new Date().getFullYear();
   const yearsParam = searchParams.get("years");
-  const parsedYears = yearsParam
-    ? yearsParam
-        .split(",")
-        .map((y) => Number.parseInt(y.trim(), 10))
-        .filter(Number.isFinite)
-    : [];
-  const years = parsedYears.length > 0 ? parsedYears : [currentYear, currentYear - 1];
+  const allYearsParam = searchParams.get("all");
+
+  let years: number[];
+
+  if (allYearsParam === "true") {
+    years = Array.from({ length: 10 }, (_, i) => currentYear - i);
+  } else if (yearsParam) {
+    const parsedYears = yearsParam
+      .split(",")
+      .map((y) => Number.parseInt(y.trim(), 10))
+      .filter(Number.isFinite);
+    years = parsedYears.length > 0 ? parsedYears : [currentYear, currentYear - 1];
+  } else {
+    years = [currentYear, currentYear - 1];
+  }
 
   try {
     const allWeeklyData: WeeklyData[] = [];

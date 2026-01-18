@@ -72,6 +72,7 @@ export default function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
           <Line
             type="monotone"
             dataKey={currentYear}
+            name={currentYear.toString()}
             stroke="#3b82f6"
             strokeWidth={2}
             dot={false}
@@ -81,6 +82,7 @@ export default function WeeklyTrendsChart({ data }: WeeklyTrendsChartProps) {
             <Line
               type="monotone"
               dataKey={previousYear}
+              name={previousYear.toString()}
               stroke="#f97316"
               strokeWidth={2}
               dot={false}
