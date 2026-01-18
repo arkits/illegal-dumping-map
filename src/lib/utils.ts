@@ -1,4 +1,22 @@
-export const CITIES = {
+interface CityConfig {
+  id: string;
+  route: string;
+  name: string;
+  domain: string;
+  datasetId: string;
+  filterField: string;
+  filterValue: string;
+  dateField: string;
+  addressField: string;
+  descriptionField: string;
+  centerLat: number;
+  centerLon: number;
+  requiresCoordinateConversion: boolean;
+  color: string;
+  availableYears?: number[];
+}
+
+export const CITIES: Record<string, CityConfig> = {
   oakland: {
     id: "oakland",
     route: "/oakland",
@@ -46,17 +64,27 @@ export const CITIES = {
     centerLon: -118.2437,
     requiresCoordinateConversion: false,
     color: "purple",
+    availableYears: [2024],
   },
-} as const;
+};
 
 export type CityId = keyof typeof CITIES;
 
-export function getCityConfig(cityId: CityId) {
+export function getCityConfig(cityId: CityId): CityConfig {
   const config = CITIES[cityId];
   if (!config) {
     throw new Error(`Unknown city: ${cityId}`);
   }
   return config;
+}
+
+export function getDefaultYearForCity(cityId: CityId): number {
+  const city = getCityConfig(cityId);
+  const currentYear = new Date().getFullYear();
+  if (city.availableYears && city.availableYears.length > 0) {
+    return city.availableYears[0];
+  }
+  return currentYear;
 }
 
 export const OAKLAND_DOMAIN = "data.oaklandca.gov";

@@ -7,7 +7,7 @@ import WeeklyTrendsChart from "@/components/WeeklyTrendsChart";
 import RequestDistribution from "@/components/RequestDistribution";
 import RequestTable from "@/components/RequestTable";
 import ThemeToggle from "@/components/ThemeToggle";
-import { DumpingRequest, getCityConfig } from "@/lib/utils";
+import { DumpingRequest, getCityConfig, getDefaultYearForCity } from "@/lib/utils";
 import Link from "next/link";
 
 const RequestMap = dynamic(() => import("@/components/RequestMap"), {
@@ -40,7 +40,7 @@ interface StatsData {
 export default function LosAngelesPage() {
   const cityId = "losangeles";
   const city = getCityConfig(cityId);
-  const currentYear = new Date().getFullYear();
+  const currentYear = getDefaultYearForCity(cityId);
   const [requests, setRequests] = useState<DumpingRequest[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
   const [stats, setStats] = useState<StatsData | null>(null);
