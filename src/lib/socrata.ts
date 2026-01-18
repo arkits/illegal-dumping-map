@@ -25,12 +25,7 @@ async function fetchFromSocrata(
   const headers: Record<string, string> = {};
 
   if (token && !retryWithoutAuth) {
-    if (username) {
-      const credentials = Buffer.from(`${username}:${token}`).toString("base64");
-      headers["Authorization"] = `Basic ${credentials}`;
-    } else {
-      headers["X-App-Token"] = token;
-    }
+    headers["X-App-Token"] = token;
   }
 
   const response = await fetch(url, {
