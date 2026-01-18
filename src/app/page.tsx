@@ -1,5 +1,11 @@
 import Link from "next/link";
 import { CITIES } from "@/lib/utils";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Illegal Dumping Map - Home",
+  description: "Explore illegal dumping service request data across California cities",
+};
 
 export default function HomePage() {
   const cities = Object.values(CITIES);

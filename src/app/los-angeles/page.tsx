@@ -47,6 +47,10 @@ export default function LosAngelesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    document.title = "Los Angeles Illegal Dumping Map";
+  }, []);
+
   const [sidebarWidth, setSidebarWidth] = useState(33);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);

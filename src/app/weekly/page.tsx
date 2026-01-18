@@ -19,6 +19,10 @@ export default function WeeklyTrendsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityId>("oakland");
 
+  useEffect(() => {
+    document.title = "Weekly Trends - Illegal Dumping Map";
+  }, []);
+
   const cities = Object.values(CITIES);
 
   const fetchData = useCallback(async () => {
