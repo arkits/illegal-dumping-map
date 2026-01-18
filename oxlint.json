@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "correctness": "warn",
+    "suspicious": "warn",
+    "pedantic": "off",
+    "style": "off",
+    "nursery": "off"
+  },
+  "allow": [
+    "next-env.d.ts",
+    ".next/**",
+    "node_modules/**",
+    "dist/**"
+  ]
+}

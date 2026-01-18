@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchAllRequestsForYear, fetchDumpingRequests } from "@/lib/socrata";
-import { getWeekNumber } from "@/lib/utils";
+import { fetchDumpingRequests } from "@/lib/socrata";
 
 const getWeekNumberForDate = (date: Date): number => {
   const start = new Date(date.getFullYear(), 0, 1);

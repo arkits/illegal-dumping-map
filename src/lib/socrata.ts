@@ -30,7 +30,7 @@ async function fetchFromSocrata(
 
   const response = await fetch(url, {
     headers,
-    next: { revalidate: 300 },
+    // next: { revalidate: 300 },
   });
 
   if (!response.ok) {
@@ -71,7 +71,12 @@ export async function fetchDumpingRequests(options: {
   return data
     .map((record) => {
       if (!record.srx || !record.sry) return null;
-      const [lat, lon] = webMercatorToWGS84(parseFloat(record.srx), parseFloat(record.sry));
+      const srx = parseFloat(record.srx);
+      const sry = parseFloat(record.sry);
+      if (!Number.isFinite(srx) || !Number.isFinite(sry)) return null;
+      if (srx > 0 || srx < -18000000) return null;
+      const isWGS84 = srx >= -180 && srx <= 180 && sry >= -90 && sry <= 90;
+      const [lat, lon] = isWGS84 ? [sry, srx] : webMercatorToWGS84(srx, sry);
 
       return {
         id: record.id,
