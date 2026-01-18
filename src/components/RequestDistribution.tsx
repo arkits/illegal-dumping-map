@@ -60,7 +60,7 @@ export default function RequestDistribution({ requests }: RequestDistributionPro
           <XAxis dataKey="status" tick={{ fontSize: 12 }} />
           <YAxis tick={{ fontSize: 12 }} />
           <Tooltip
-            formatter={(value: number) => [value, "Requests"]}
+            formatter={(value: number | undefined) => [value ?? 0, "Requests"]}
             contentStyle={{
               backgroundColor: "#fff",
               border: "1px solid #e5e7eb",
