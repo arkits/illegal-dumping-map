@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { fetchDumpingRequests, CITIES } from "@/lib/socrata";
-import { getWeekNumber, CityId } from "@/lib/utils";
+import { fetchDumpingRequests } from "@/lib/socrata";
+import { getWeekNumber } from "@/lib/utils";
 import { convexClient, api } from "@/lib/convex-client";
+
+// Type-safe city ID validator that returns the exact literal type
+const CITY_IDS = ["oakland", "sanfrancisco", "losangeles", "newyork", "chicago", "seattle", "dallas", "montgomery", "kansascity"] as const;
+type ValidCityId = typeof CITY_IDS[number];
+
+function getCityId(param: string | null): ValidCityId {
+  if (param && CITY_IDS.includes(param as ValidCityId)) {
+    return param as ValidCityId;
+  }
+  return "oakland";
+}
 
 interface WeeklyData {
   week: number;
@@ -21,9 +32,7 @@ export async function GET(request: NextRequest) {
       const currentYear = new Date().getFullYear();
 
       const cityIdParam = searchParams.get("cityId");
-      const cityId = (cityIdParam && cityIdParam in CITIES
-        ? cityIdParam
-        : "oakland") as CityId;
+      const cityId = getCityId(cityIdParam);
 
       const yearsParam = searchParams.get("years");
       const allYearsParam = searchParams.get("all");
@@ -55,7 +64,7 @@ export async function GET(request: NextRequest) {
           },
           async () => {
             return await convexClient.query(api.weekly.getCached, {
-              cityId: cityId as "oakland" | "sanfrancisco" | "losangeles",
+              cityId,
               years,
             });
           }
@@ -119,7 +128,7 @@ export async function GET(request: NextRequest) {
         // Store in Convex cache (fire and forget)
         convexClient
           .mutation(api.weekly.setCached, {
-            cityId: cityId as "oakland" | "sanfrancisco" | "losangeles",
+            cityId,
             years,
             data: allWeeklyData,
           })

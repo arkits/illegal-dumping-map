@@ -80,6 +80,73 @@ describe('Socrata API - City Configuration', () => {
       expect(calledUrl).toContain('date_extract_y(requested_datetime)=2025');
     });
 
+    it('should build correct URL for Los Angeles', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      });
+
+      await fetchDumpingRequests({ cityId: 'losangeles', year: 2024, limit: 10 });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const calledUrl = decodeURIComponent(mockFetch.mock.calls[0][0] as string);
+      expect(calledUrl).toContain('data.lacity.org');
+      expect(calledUrl).toContain('b7dx-7gc3');
+      expect(calledUrl).toContain("requesttype='Illegal");
+      expect(calledUrl).toContain('Dumping+Pickup');
+      expect(calledUrl).toContain('date_extract_y(createddate)=2024');
+    });
+
+    it('should build correct URL for New York', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      });
+
+      await fetchDumpingRequests({ cityId: 'newyork', year: 2025, limit: 10 });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const calledUrl = decodeURIComponent(mockFetch.mock.calls[0][0] as string);
+      expect(calledUrl).toContain('data.cityofnewyork.us');
+      expect(calledUrl).toContain('erm2-nwe9');
+      expect(calledUrl).toContain("complaint_type='Illegal");
+      expect(calledUrl).toContain('Dumping');
+      expect(calledUrl).toContain('date_extract_y(created_date)=2025');
+    });
+
+    it('should build correct URL for Chicago', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      });
+
+      await fetchDumpingRequests({ cityId: 'chicago', year: 2025, limit: 10 });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const calledUrl = decodeURIComponent(mockFetch.mock.calls[0][0] as string);
+      expect(calledUrl).toContain('data.cityofchicago.org');
+      expect(calledUrl).toContain('v6vf-nfxy');
+      expect(calledUrl).toContain("sr_type='Fly");
+      expect(calledUrl).toContain('Dumping+Complaint');
+      expect(calledUrl).toContain('date_extract_y(created_date)=2025');
+    });
+
+    it('should build correct URL for Seattle', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      });
+
+      await fetchDumpingRequests({ cityId: 'seattle', year: 2025, limit: 10 });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const calledUrl = decodeURIComponent(mockFetch.mock.calls[0][0] as string);
+      expect(calledUrl).toContain('data.seattle.gov');
+      expect(calledUrl).toContain('bpvk-ju3y');
+      expect(calledUrl).toContain('date_extract_y(createddate)=2025');
+      // Seattle doesn't have filterField/filterValue
+    });
+
     it('should transform Oakland record correctly', async () => {
       mockFetch.mockResolvedValue({
         ok: true,
@@ -132,6 +199,122 @@ describe('Socrata API - City Configuration', () => {
       expect(result[0].datetimeinit).toBe('2025-01-15T10:00:00.000');
       expect(result[0].status).toBe('Closed');
       expect(result[0].address).toBe('208 LEXINGTON ST');
+    });
+
+    it('should transform Los Angeles record correctly', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            srnumber: '1-12345678',
+            latitude: '34.0522',
+            longitude: '-118.2437',
+            createddate: '2024-01-15T10:00:00.000',
+            status: 'Closed',
+            requesttype: 'Illegal Dumping Pickup',
+            description: 'Illegal dumping',
+            address: '123 MAIN ST',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'losangeles' });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('1-12345678');
+      expect(result[0].lat).toBeCloseTo(34.0522, 4);
+      expect(result[0].lon).toBeCloseTo(-118.2437, 4);
+      expect(result[0].datetimeinit).toBe('2024-01-15T10:00:00.000');
+      expect(result[0].status).toBe('Closed');
+      expect(result[0].description).toBe('Illegal Dumping Pickup');
+      expect(result[0].address).toBe('123 MAIN ST');
+    });
+
+    it('should transform New York record correctly', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            unique_key: '12345678',
+            latitude: '40.7128',
+            longitude: '-74.006',
+            created_date: '2025-01-15T10:00:00.000',
+            status: 'Closed',
+            descriptor: 'Illegal Dumping',
+            description: 'Illegal dumping complaint',
+            incident_address: '123 BROADWAY',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'newyork' });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('12345678');
+      expect(result[0].lat).toBeCloseTo(40.7128, 4);
+      expect(result[0].lon).toBeCloseTo(-74.006, 4);
+      expect(result[0].datetimeinit).toBe('2025-01-15T10:00:00.000');
+      expect(result[0].status).toBe('Closed');
+      expect(result[0].description).toBe('Illegal Dumping');
+      expect(result[0].address).toBe('123 BROADWAY');
+    });
+
+    it('should transform Chicago record correctly', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            sr_number: '12345678',
+            latitude: '41.8781',
+            longitude: '-87.6298',
+            created_date: '2025-01-15T10:00:00.000',
+            status: 'Closed',
+            sr_type: 'Fly Dumping Complaint',
+            description: 'Fly dumping',
+            street_address: '123 STATE ST',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'chicago' });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('12345678');
+      expect(result[0].lat).toBeCloseTo(41.8781, 4);
+      expect(result[0].lon).toBeCloseTo(-87.6298, 4);
+      expect(result[0].datetimeinit).toBe('2025-01-15T10:00:00.000');
+      expect(result[0].status).toBe('Closed');
+      expect(result[0].description).toBe('Fly Dumping Complaint');
+      expect(result[0].address).toBe('123 STATE ST');
+    });
+
+    it('should transform Seattle record correctly', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            servicerequestnumber: '12345678',
+            latitude: '47.6062',
+            longitude: '-122.3321',
+            createddate: '2025-01-15T10:00:00.000',
+            servicerequeststatusname: 'Closed',
+            descriptionoftheillegaldumping: 'Illegal dumping',
+            description: 'Dumping complaint',
+            location: '123 PINE ST',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'seattle' });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe('12345678');
+      expect(result[0].lat).toBeCloseTo(47.6062, 4);
+      expect(result[0].lon).toBeCloseTo(-122.3321, 4);
+      expect(result[0].datetimeinit).toBe('2025-01-15T10:00:00.000');
+      expect(result[0].status).toBe('Closed');
+      expect(result[0].description).toBe('Illegal dumping');
+      expect(result[0].address).toBe('123 PINE ST');
     });
 
     it('should filter records with invalid coordinates', async () => {
@@ -248,6 +431,167 @@ describe('Socrata API - City Configuration', () => {
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
+
+    it('should filter records with missing id', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            requestid: '',
+            srx: '-13611256.78',
+            sry: '4551879.71',
+            datetimeinit: '2025-01-15T10:00:00.000',
+            status: 'OPEN',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'oakland' });
+      expect(result).toHaveLength(0);
+    });
+
+    it('should filter records with missing datetimeinit', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            requestid: '123456',
+            srx: '-13611256.78',
+            sry: '4551879.71',
+            datetimeinit: '',
+            status: 'OPEN',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'oakland' });
+      expect(result).toHaveLength(0);
+    });
+
+    it('should handle records with fallback address fields', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            requestid: '123456',
+            srx: '-13611256.78',
+            sry: '4551879.71',
+            datetimeinit: '2025-01-15T10:00:00.000',
+            status: 'OPEN',
+            address: '123 MAIN ST', // fallback when probaddress is missing
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'oakland' });
+      expect(result).toHaveLength(1);
+      expect(result[0].address).toBe('123 MAIN ST');
+    });
+
+    it('should handle records with fallback description fields', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            service_request_id: '123456',
+            lat: '37.759907915394',
+            long: '-122.420728147926',
+            requested_datetime: '2025-01-15T10:00:00.000',
+            status_description: 'Closed',
+            description: 'Fallback description', // fallback when service_details is missing
+            address: '123 MAIN ST',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'sanfrancisco' });
+      expect(result).toHaveLength(1);
+      expect(result[0].description).toBe('Fallback description');
+    });
+
+    it('should handle Seattle with servicerequeststatusname field', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            servicerequestnumber: '12345678',
+            latitude: '47.6062',
+            longitude: '-122.3321',
+            createddate: '2025-01-15T10:00:00.000',
+            servicerequeststatusname: 'Closed',
+            descriptionoftheillegaldumping: 'Illegal dumping',
+            location: '123 PINE ST',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'seattle' });
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe('Closed');
+    });
+
+    it('should handle New York with incident_address field', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            unique_key: '12345678',
+            latitude: '40.7128',
+            longitude: '-74.006',
+            created_date: '2025-01-15T10:00:00.000',
+            status: 'Closed',
+            descriptor: 'Illegal Dumping',
+            incident_address: '123 BROADWAY',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'newyork' });
+      expect(result).toHaveLength(1);
+      expect(result[0].address).toBe('123 BROADWAY');
+    });
+
+    it('should handle Chicago with sr_type field', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            sr_number: '12345678',
+            latitude: '41.8781',
+            longitude: '-87.6298',
+            created_date: '2025-01-15T10:00:00.000',
+            status: 'Closed',
+            sr_type: 'Fly Dumping Complaint',
+            street_address: '123 STATE ST',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'chicago' });
+      expect(result).toHaveLength(1);
+      expect(result[0].description).toBe('Fly Dumping Complaint');
+    });
+
+    it('should handle Los Angeles with fallback description field', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            srnumber: '1-12345678',
+            latitude: '34.0522',
+            longitude: '-118.2437',
+            createddate: '2024-01-15T10:00:00.000',
+            status: 'Closed',
+            description: 'Illegal dumping', // fallback when requesttype is missing
+            address: '123 MAIN ST',
+          },
+        ],
+      });
+
+      const result = await fetchDumpingRequests({ cityId: 'losangeles' });
+      expect(result).toHaveLength(1);
+      expect(result[0].description).toBe('Illegal dumping');
+    });
   });
 
   describe('fetchAllRequestsForYear', () => {
@@ -296,6 +640,89 @@ describe('Socrata API - City Configuration', () => {
       const result = await fetchAllRequestsForYear('oakland', 2025);
 
       expect(result.length).toBe(6000);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle single page of results', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () =>
+          Array(100)
+            .fill(null)
+            .map((_, i) => ({
+              requestid: `req-${i}`,
+              srx: '-13611256.78',
+              sry: '4551879.71',
+              datetimeinit: '2025-01-15T10:00:00.000',
+              status: 'OPEN',
+            })),
+      });
+
+      const result = await fetchAllRequestsForYear('oakland', 2025);
+
+      expect(result.length).toBe(100);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle empty results', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [],
+      });
+
+      const result = await fetchAllRequestsForYear('oakland', 2025);
+
+      expect(result.length).toBe(0);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should work with different cities', async () => {
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            service_request_id: '123456',
+            lat: '37.759907915394',
+            long: '-122.420728147926',
+            requested_datetime: '2025-01-15T10:00:00.000',
+            status_description: 'Closed',
+            service_details: 'trash_dumping',
+            address: '123 MAIN ST',
+          },
+        ],
+      });
+
+      const result = await fetchAllRequestsForYear('sanfrancisco', 2025);
+
+      expect(result.length).toBe(1);
+      expect(result[0].cityId).toBe('sanfrancisco');
+    });
+  });
+
+  describe('clearCache', () => {
+    it('should clear the cache', async () => {
+      const mockFetch = vi.fn();
+      (global as unknown as { fetch: typeof mockFetch }).fetch = mockFetch;
+
+      mockFetch.mockResolvedValue({
+        ok: true,
+        json: async () => [
+          {
+            requestid: '123456',
+            srx: '-13611256.78',
+            sry: '4551879.71',
+            datetimeinit: '2025-01-15T10:00:00.000',
+            status: 'OPEN',
+          },
+        ],
+      });
+
+      await fetchDumpingRequests({ cityId: 'oakland' });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      clearCache();
+
+      await fetchDumpingRequests({ cityId: 'oakland' });
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
   });

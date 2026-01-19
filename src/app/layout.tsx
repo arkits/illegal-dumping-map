@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import ReactQueryProvider from "./ReactQueryProvider";

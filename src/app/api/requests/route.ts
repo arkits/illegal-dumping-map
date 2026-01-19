@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { fetchDumpingRequests, CITIES } from "@/lib/socrata";
-import { CityId } from "@/lib/utils";
+import { fetchDumpingRequests } from "@/lib/socrata";
 import { convexClient, api } from "@/lib/convex-client";
+
+// Type-safe city ID validator that returns the exact literal type
+const CITY_IDS = ["oakland", "sanfrancisco", "losangeles", "newyork", "chicago", "seattle", "dallas", "montgomery", "kansascity"] as const;
+type ValidCityId = typeof CITY_IDS[number];
+
+function getCityId(param: string | null): ValidCityId {
+  if (param && CITY_IDS.includes(param as ValidCityId)) {
+    return param as ValidCityId;
+  }
+  return "oakland";
+}
 
 export async function GET(request: NextRequest) {
   return Sentry.startSpan(
@@ -24,9 +34,7 @@ export async function GET(request: NextRequest) {
   };
 
   const cityIdParam = searchParams.get("cityId");
-  const cityId = (cityIdParam && cityIdParam in CITIES
-    ? cityIdParam
-    : "oakland") as CityId;
+  const cityId = getCityId(cityIdParam);
 
   const yearParam = parseIntParam(searchParams.get("year"), NaN);
   const year = Number.isFinite(yearParam) ? yearParam : undefined;
@@ -68,7 +76,7 @@ export async function GET(request: NextRequest) {
           },
           async () => {
             return await convexClient.query(api.requests.getCached, {
-              cityId: cityId as "oakland" | "sanfrancisco" | "losangeles",
+              cityId,
               year,
               limit,
               offset,
@@ -114,7 +122,7 @@ export async function GET(request: NextRequest) {
         // Store in Convex cache (fire and forget)
         convexClient
           .mutation(api.requests.setCached, {
-            cityId: cityId as "oakland" | "sanfrancisco" | "losangeles",
+            cityId,
             year,
             limit,
             offset,

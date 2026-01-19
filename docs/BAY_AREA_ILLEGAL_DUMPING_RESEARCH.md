@@ -4,6 +4,8 @@
 
 This document summarizes research into illegal dumping data availability across San Francisco Bay Area cities. The goal was to identify cities with publicly accessible APIs (preferably Socrata) that provide illegal dumping service request data similar to Oakland's implementation.
 
+**Related Research:** For research on other major US cities (Seattle, Austin, Chicago, etc.), see [US Cities Illegal Dumping Research](US_CITIES_ILLEGAL_DUMPING_RESEARCH.md).
+
 **Key Findings:**
 - ✅ **San Francisco**: Has Socrata API with illegal dumping data (2,620+ records)
 - ✅ **Los Angeles**: Has Socrata API with illegal dumping data (~114K records in 2024)
@@ -557,6 +559,7 @@ A test script was created at `test-apis.ts` to verify API accessibility and data
 ### Related Links
 - [SF 311 Service Requests by Neighborhood](https://www.sf.gov/data--311-service-requests-neighborhood)
 - [Oakland Illegal Dumping Services](https://www.oaklandca.gov/News-Releases/Oakland-Increases-Weekend-Staffing-to-Boost-Illegal-Dumping-Cleanup-Crews)
+- [US Cities Illegal Dumping Research](US_CITIES_ILLEGAL_DUMPING_RESEARCH.md) - Research on Seattle, Austin, Chicago, and other major US cities
 
 ---
 
@@ -574,11 +577,18 @@ A test script was created at `test-apis.ts` to verify API accessibility and data
   - Updated documentation with LA and Sacramento findings
   - Added integration code examples for Los Angeles
 
+- **2026-01-19**: Expanded research to other major US cities
+  - Created new document: [US Cities Illegal Dumping Research](US_CITIES_ILLEGAL_DUMPING_RESEARCH.md)
+  - Tested Seattle API ✅ (272K+ records, ready for integration)
+  - Tested Austin API ⚠️ (2.3M+ records, needs filtering investigation)
+  - Tested Chicago API ⚠️ (millions of records, needs filter identification)
+  - Documented findings for other major cities
+
 ---
 
 ## Notes
 
-- All API tests were performed in January 2025
+- All API tests were performed in January 2025 and January 2026
 - Service availability may change over time
 - Some cities may add datasets in the future
 - Consider periodic re-evaluation of available data sources

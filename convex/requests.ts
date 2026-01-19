@@ -2,7 +2,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 
-type CityId = "oakland" | "sanfrancisco" | "losangeles";
+type CityId = "oakland" | "sanfrancisco" | "losangeles" | "newyork" | "chicago" | "seattle" | "dallas" | "montgomery" | "kansascity";
 
 /**
  * Generate cache key for requests query.
@@ -34,7 +34,17 @@ function generateCacheKey(params: {
  */
 export const getCached = query({
   args: {
-    cityId: v.union(v.literal("oakland"), v.literal("sanfrancisco"), v.literal("losangeles")),
+    cityId: v.union(
+      v.literal("oakland"),
+      v.literal("sanfrancisco"),
+      v.literal("losangeles"),
+      v.literal("newyork"),
+      v.literal("chicago"),
+      v.literal("seattle"),
+      v.literal("dallas"),
+      v.literal("montgomery"),
+      v.literal("kansascity")
+    ),
     year: v.optional(v.number()),
     limit: v.number(),
     offset: v.number(),
@@ -65,7 +75,17 @@ export const getCached = query({
  */
 export const setCached = mutation({
   args: {
-    cityId: v.union(v.literal("oakland"), v.literal("sanfrancisco"), v.literal("losangeles")),
+    cityId: v.union(
+      v.literal("oakland"),
+      v.literal("sanfrancisco"),
+      v.literal("losangeles"),
+      v.literal("newyork"),
+      v.literal("chicago"),
+      v.literal("seattle"),
+      v.literal("dallas"),
+      v.literal("montgomery"),
+      v.literal("kansascity")
+    ),
     year: v.optional(v.number()),
     limit: v.number(),
     offset: v.number(),

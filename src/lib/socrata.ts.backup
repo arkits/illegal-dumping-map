@@ -52,22 +52,7 @@ interface SocrataResponse {
   street_address?: string;
   location?: string;
   neighborhood?: string;
-  geolocation?: {
-    coordinates?: [number, number];
-  };
-  address_with_geocode?: {
-    latitude?: string;
-    longitude?: string;
-  };
-  street_no?: string;
-  street_name?: string;
-  city?: string;
-  caseno?: string;
-  case_id?: string;
-  service_request_number?: string;
-  service_request_type?: string;
-  lat_location?: string;
-  [key: string]: string | undefined | { coordinates?: [number, number] } | { latitude?: string; longitude?: string };
+  [key: string]: string | undefined;
 }
 
 async function fetchFromSocrata(
@@ -193,41 +178,25 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     description = record.descriptionoftheillegaldumping || "";
     address = record.location || "";
   } else if (cityId === "dallas") {
-    id = (record.service_request_number as string) || "";
-    
-    // Dallas uses lat_location field in format "(lat,lon)" as a string
-    const latLocationStr = (record.lat_location as string) || "";
-    if (latLocationStr) {
-      // Parse "(lat,lon)" format - remove parentheses and split by comma
-      const cleaned = latLocationStr.trim().replace(/^\(|\)$/g, "");
-      const parts = cleaned.split(",");
-      if (parts.length === 2) {
-        lat = parseFloat(parts[0].trim());
-        lon = parseFloat(parts[1].trim());
-      } else {
-        lat = 0;
-        lon = 0;
-      }
-    } else {
-      // Fallback to latitude/longitude if lat_location is not available
-      const latStr = (record.latitude as string) || "0";
-      const lonStr = (record.longitude as string) || "0";
-      lat = parseFloat(latStr);
-      lon = parseFloat(lonStr);
-    }
+    id = record.service_request_number || "";
+    const latStr = record.latitude || "0";
+    const lonStr = record.longitude || "0";
+    lat = parseFloat(latStr);
+    lon = parseFloat(lonStr);
 
     if (!filterInvalidCoordinates(lon, lat)) {
       return null;
     }
 
-    // lat and lon are already numbers, no conversion needed
+    const isWGS = isWGS84(lat, lon);
+    [lat, lon] = isWGS ? [lat, lon] : [parseFloat(lat), parseFloat(lon)];
 
-    datetimeinit = (record.created_date as string) || "";
-    status = (record.status as string) || "";
-    description = (record.service_request_type as string) || "";
-    address = (record.address as string) || "";
+    datetimeinit = record.created_date || "";
+    status = record.status || "";
+    description = record.service_request_type || "";
+    address = record.address || "";
   } else if (cityId === "montgomery") {
-    id = (record.caseno as string) || "";
+    id = record.caseno || "";
     const coords = record.geolocation?.coordinates;
     if (!coords || coords.length !== 2) {
       return null;
@@ -236,15 +205,12 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     lat = coords[1];
     lon = coords[0];
 
-    datetimeinit = (record.opendate as string) || "";
+    datetimeinit = record.opendate || "";
     status = "";
-    description = (record.casedesc as string) || "";
-    const streetNo = record.street_no as string;
-    const streetName = record.street_name as string;
-    const city = record.city as string;
-    address = streetNo && streetName && city ? `${streetNo} ${streetName}` : city || "";
+    description = record.casedesc || "";
+    address = record.street_no && record.street_name && record.city ? `${record.street_no} ${record.street_name}` : record.city || "";
   } else if (cityId === "kansascity") {
-    id = (record.case_id as string) || "";
+    id = record.case_id || "";
     const addrGeo = record.address_with_geocode;
     if (!addrGeo) {
       return null;
@@ -258,10 +224,10 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
       return null;
     }
 
-    datetimeinit = (record.creation_date as string) || "";
-    status = (record.status as string) || "";
-    description = (record.request_type as string) || "";
-    address = (record.street_address as string) || "";
+    datetimeinit = record.creation_date || "";
+    status = record.status || "";
+    description = record.request_type || "";
+    address = record.street_address || "";
   } else {
     const rec: any = record;
     id = rec.service_request_id || rec.servicerequestnumber || rec.unique_key || "";
@@ -274,10 +240,150 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
       return null;
     }
 
-    datetimeinit = rec.requested_datetime || rec.createddate || rec.created_date || "";
-    status = rec.status_description || rec.servicerequeststatusname || rec.status || "";
-    description = rec.service_request_type || rec.requesttype || rec.service_subtype || rec.description || rec.descriptor || rec.descriptionoftheillegaldumping || rec.service_details || "";
+    datetimeinit = rec.requested_datetime || rec.requested_datetime || rec.createddate || rec.created_date || rec.created_date || "";
+    status = rec.status_description || rec.servicerequeststatusname || rec.status || rec.status || "";
+    description = rec.service_request_type || rec.service_request_type || rec.requesttype || rec.service_subtype || rec.description || rec.descriptor || rec.descriptionoftheillegaldumping || rec.service_details || rec.description || "";
     address = rec.address || rec.street_address || rec.incident_address || rec.location || rec.probaddress || "";
+  }
+
+    const isWGS = isWGS84(lat, lon);
+    [lat, lon] = isWGS ? [lat, lon] : [parseFloat(lat), parseFloat(lon)];
+
+    datetimeinit = record.created_date || "";
+    status = record.status || "";
+    description = record.service_request_type || "";
+    address = record.address || "";
+  } else if (cityId === "montgomery") {
+    id = record.caseno || "";
+    const coords = record.geolocation?.coordinates;
+    if (!coords || coords.length !== 2) {
+      return null;
+    }
+
+    lat = coords[1];
+    lon = coords[0];
+
+    datetimeinit = record.opendate || "";
+    status = "";
+    description = record.casedesc || "";
+    address = record.street_no && record.street_name && record.city ? `${record.street_no} ${record.street_name}` : record.city || "";
+  } else if (cityId === "kansascity") {
+    id = record.case_id || "";
+    lat = parseFloat(record.address_with_geocode?.latitude || "0");
+    lon = parseFloat(record.address_with_geocode?.longitude || "0");
+
+    if (!filterInvalidCoordinates(lon, lat)) {
+      return null;
+    }
+
+    datetimeinit = record.creation_date || "";
+    status = record.status || "";
+    description = record.request_type || "";
+    address = record.street_address || "";
+  } else {
+    // San Francisco (default)
+    id = record.service_request_id || "";
+    lat = parseFloat(record.lat || "0");
+    lon = parseFloat(record.long || "0");
+
+    if (!filterInvalidCoordinates(lon, lat)) {
+      return null;
+    }
+
+    datetimeinit = record.requested_datetime || "";
+    status = record.status_description || "";
+    description = record.service_details || record.description || "";
+    address = record.address || "";
+  }
+
+  if (!id || !datetimeinit) {
+    return null;
+  }
+
+  return {
+    id,
+    lat,
+    lon,
+    datetimeinit,
+    status,
+    description,
+    address,
+    cityId,
+  };
+}
+
+    const isWGS = isWGS84(srx, sry);
+    [lat, lon] = isWGS ? [sry, srx] : webMercatorToWGS84(srx, sry);
+    datetimeinit = record.datetimeinit || "";
+    status = record.status || "";
+    description = record.description || "";
+    address = record.probaddress || record.address || "";
+  } else if (cityId === "losangeles") {
+    id = record.srnumber || "";
+    lat = parseFloat(record.latitude || "0");
+    lon = parseFloat(record.longitude || "0");
+
+    if (!filterInvalidCoordinates(lon, lat)) {
+      return null;
+    }
+
+    datetimeinit = record.createddate || "";
+    status = record.status || "";
+    description = record.requesttype || record.description || "";
+    address = record.address || "";
+  } else if (cityId === "newyork") {
+    id = record.unique_key || "";
+    lat = parseFloat(record.latitude || "0");
+    lon = parseFloat(record.longitude || "0");
+
+    if (!filterInvalidCoordinates(lon, lat)) {
+      return null;
+    }
+
+    datetimeinit = record.created_date || "";
+    status = record.status || "";
+    description = record.descriptor || record.description || "";
+    address = record.incident_address || record.address || "";
+  } else if (cityId === "chicago") {
+    id = record.sr_number || "";
+    lat = parseFloat(record.latitude || "0");
+    lon = parseFloat(record.longitude || "0");
+
+    if (!filterInvalidCoordinates(lon, lat)) {
+      return null;
+    }
+
+    datetimeinit = record.created_date || "";
+    status = record.status || "";
+    description = record.sr_type || record.description || "";
+    address = record.street_address || record.address || "";
+  } else if (cityId === "seattle") {
+    id = record.servicerequestnumber || "";
+    lat = parseFloat(record.latitude || "0");
+    lon = parseFloat(record.longitude || "0");
+
+    if (!filterInvalidCoordinates(lon, lat)) {
+      return null;
+    }
+
+    datetimeinit = record.createddate || "";
+    status = record.servicerequeststatusname || record.status || "";
+    description = record.descriptionoftheillegaldumping || record.description || "";
+    address = record.location || record.address || "";
+  } else {
+    // San Francisco (default)
+    id = record.service_request_id || "";
+    lat = parseFloat(record.lat || "0");
+    lon = parseFloat(record.long || "0");
+
+    if (!filterInvalidCoordinates(lon, lat)) {
+      return null;
+    }
+
+    datetimeinit = record.requested_datetime || "";
+    status = record.status_description || "";
+    description = record.service_details || record.description || "";
+    address = record.address || "";
   }
 
   if (!id || !datetimeinit) {

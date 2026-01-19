@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently \"next dev\" \"convex dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "oxlint --fix",
@@ -39,6 +39,7 @@
     "@vitest/browser": "^4.0.17",
     "@vitest/ui": "^4.0.17",
     "autoprefixer": "^10.4.23",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.8",
     "happy-dom": "^20.3.1",
     "oxlint": "^0.15.10",

@@ -2,25 +2,39 @@
 
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
+  --background-start-rgb: 248, 250, 252;
   --background-end-rgb: 255, 255, 255;
 }
 
 .dark {
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 31, 41, 55;
-  --background-end-rgb: 17, 24, 39;
+  --background-start-rgb: 15, 23, 42;
+  --background-end-rgb: 15, 23, 42;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background: rgb(var(--background-start-rgb));
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .leaflet-container {
@@ -28,3 +42,4 @@ body {
   height: 100%;
   z-index: 1;
 }
+

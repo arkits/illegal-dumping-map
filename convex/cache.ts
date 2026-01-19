@@ -50,7 +50,17 @@ export const set = mutation({
       v.literal("stats"),
       v.literal("weekly")
     ),
-    cityId: v.union(v.literal("oakland"), v.literal("sanfrancisco"), v.literal("losangeles")),
+    cityId: v.union(
+      v.literal("oakland"),
+      v.literal("sanfrancisco"),
+      v.literal("losangeles"),
+      v.literal("newyork"),
+      v.literal("chicago"),
+      v.literal("seattle"),
+      v.literal("dallas"),
+      v.literal("montgomery"),
+      v.literal("kansascity")
+    ),
     data: v.any(),
     ttlMs: v.number(), // Time to live in milliseconds
     metadata: v.optional(v.object({
@@ -105,7 +115,14 @@ export const invalidate = mutation({
       v.literal("stats"),
       v.literal("weekly")
     )),
-    cityId: v.optional(v.union(v.literal("oakland"), v.literal("sanfrancisco"), v.literal("losangeles"))),
+    cityId: v.optional(v.union(
+      v.literal("oakland"),
+      v.literal("sanfrancisco"),
+      v.literal("losangeles"),
+      v.literal("newyork"),
+      v.literal("chicago"),
+      v.literal("seattle")
+    )),
   },
   handler: async (ctx, args) => {
     if (args.cacheKey && args.cacheType) {

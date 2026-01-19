@@ -11,7 +11,17 @@ export default defineSchema({
       v.literal("stats"),            // Aggregated stats
       v.literal("weekly")            // Weekly trend data
     ),
-    cityId: v.union(v.literal("oakland"), v.literal("sanfrancisco"), v.literal("losangeles")),
+    cityId: v.union(
+      v.literal("oakland"),
+      v.literal("sanfrancisco"),
+      v.literal("losangeles"),
+      v.literal("newyork"),
+      v.literal("chicago"),
+      v.literal("seattle"),
+      v.literal("dallas"),
+      v.literal("montgomery"),
+      v.literal("kansascity")
+    ),
     data: v.any(), // JSON-serializable cached data
     expiresAt: v.number(), // Unix timestamp
     createdAt: v.number(), // Unix timestamp

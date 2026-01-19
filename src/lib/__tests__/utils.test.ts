@@ -11,6 +11,9 @@ import {
   filterInvalidCoordinates,
   CITIES,
   getCityConfig,
+  getDefaultYearForCity,
+  degToRad,
+  isValidWebMercator,
   CityId,
 } from '../utils';
 
@@ -275,5 +278,161 @@ describe('filterInvalidCoordinates', () => {
     expect(isWGS84(-181, 0)).toBe(false);
     expect(isWGS84(0, 91)).toBe(false);
     expect(isWGS84(0, -91)).toBe(false);
+  });
+});
+
+describe('degToRad', () => {
+  it('should convert degrees to radians correctly', () => {
+    expect(degToRad(0)).toBe(0);
+    expect(degToRad(90)).toBeCloseTo(Math.PI / 2, 5);
+    expect(degToRad(180)).toBeCloseTo(Math.PI, 5);
+    expect(degToRad(360)).toBeCloseTo(2 * Math.PI, 5);
+    expect(degToRad(-90)).toBeCloseTo(-Math.PI / 2, 5);
+  });
+
+  it('should handle fractional degrees', () => {
+    expect(degToRad(45)).toBeCloseTo(Math.PI / 4, 5);
+    expect(degToRad(30)).toBeCloseTo(Math.PI / 6, 5);
+    expect(degToRad(37.804747)).toBeCloseTo(0.6598, 3);
+  });
+});
+
+describe('isValidWebMercator', () => {
+  it('should return true for valid Web Mercator coordinates', () => {
+    expect(isValidWebMercator(-13611256.78)).toBe(true);
+    expect(isValidWebMercator(-13610886.6)).toBe(true);
+    expect(isValidWebMercator(-18000000)).toBe(true);
+    expect(isValidWebMercator(-1)).toBe(true);
+  });
+
+  it('should return false for invalid Web Mercator coordinates', () => {
+    expect(isValidWebMercator(0)).toBe(false);
+    expect(isValidWebMercator(1356837.439)).toBe(false);
+    expect(isValidWebMercator(180)).toBe(false);
+    expect(isValidWebMercator(-18000001)).toBe(false);
+    expect(isValidWebMercator(1000000)).toBe(false);
+  });
+});
+
+describe('getDefaultYearForCity', () => {
+  it('should return current year for cities without availableYears', () => {
+    const currentYear = new Date().getFullYear();
+    expect(getDefaultYearForCity('oakland')).toBe(currentYear);
+    expect(getDefaultYearForCity('sanfrancisco')).toBe(currentYear);
+  });
+
+  it('should return first available year for cities with availableYears', () => {
+    expect(getDefaultYearForCity('losangeles')).toBe(2024);
+  });
+
+  it('should handle all city types', () => {
+    const cities: CityId[] = ['oakland', 'sanfrancisco', 'losangeles', 'newyork', 'chicago', 'seattle'];
+    cities.forEach((cityId) => {
+      const year = getDefaultYearForCity(cityId);
+      expect(year).toBeGreaterThan(2020);
+      expect(year).toBeLessThanOrEqual(new Date().getFullYear() + 1);
+    });
+  });
+});
+
+describe('distBetweenLatLon edge cases', () => {
+  it('should handle antipodal points (opposite sides of Earth)', () => {
+    const point1: [number, number] = [0, 0];
+    const point2: [number, number] = [0, 180];
+    const distance = distBetweenLatLon(point1, point2);
+    // Distance should be approximately half the Earth's circumference (~20,000 km)
+    expect(distance).toBeGreaterThan(19000);
+    expect(distance).toBeLessThan(21000);
+  });
+
+  it('should handle points at the poles', () => {
+    const northPole: [number, number] = [90, 0];
+    const southPole: [number, number] = [-90, 0];
+    const distance = distBetweenLatLon(northPole, southPole);
+    // Distance should be approximately half the Earth's circumference (~20,000 km)
+    expect(distance).toBeGreaterThan(19000);
+    expect(distance).toBeLessThan(21000);
+  });
+
+  it('should handle very small distances', () => {
+    const point1: [number, number] = [37.804747, -122.272];
+    const point2: [number, number] = [37.804748, -122.272001];
+    const distance = distBetweenLatLon(point1, point2);
+    expect(distance).toBeGreaterThan(0);
+    expect(distance).toBeLessThan(0.1);
+  });
+
+  it('should handle coordinates at the equator', () => {
+    const point1: [number, number] = [0, -122.272];
+    const point2: [number, number] = [0, -122.272001];
+    const distance = distBetweenLatLon(point1, point2);
+    expect(distance).toBeGreaterThan(0);
+    expect(distance).toBeLessThan(0.1);
+  });
+});
+
+describe('getWeekNumber edge cases', () => {
+  it('should handle year boundaries correctly', () => {
+    const dec31_2023 = new Date('2023-12-31');
+    const jan1_2024 = new Date('2024-01-01');
+    const week31 = getWeekNumber(dec31_2023);
+    const week1 = getWeekNumber(jan1_2024);
+    // Week numbers should be valid
+    expect(week31).toBeGreaterThanOrEqual(1);
+    expect(week31).toBeLessThanOrEqual(53);
+    expect(week1).toBeGreaterThanOrEqual(1);
+    expect(week1).toBeLessThanOrEqual(53);
+  });
+
+  it('should handle different years consistently', () => {
+    const jan1_2024 = new Date('2024-01-01');
+    const jan1_2025 = new Date('2025-01-01');
+    const week2024 = getWeekNumber(jan1_2024);
+    const week2025 = getWeekNumber(jan1_2025);
+    // Week numbers should be valid (Jan 1, 2024 is week 1, Jan 1, 2025 is week 1)
+    expect(week2024).toBeGreaterThanOrEqual(1);
+    expect(week2024).toBeLessThanOrEqual(53);
+    expect(week2025).toBe(1);
+  });
+
+  it('should handle mid-year dates', () => {
+    const jul4 = new Date('2024-07-04');
+    const week = getWeekNumber(jul4);
+    expect(week).toBeGreaterThan(26);
+    expect(week).toBeLessThan(29);
+  });
+});
+
+describe('CITIES configuration completeness', () => {
+  it('should have all required fields for each city', () => {
+    Object.values(CITIES).forEach((city) => {
+      expect(city.id).toBeDefined();
+      expect(city.route).toBeDefined();
+      expect(city.name).toBeDefined();
+      expect(city.domain).toBeDefined();
+      expect(city.datasetId).toBeDefined();
+      expect(city.dateField).toBeDefined();
+      expect(city.centerLat).toBeDefined();
+      expect(city.centerLon).toBeDefined();
+      expect(city.color).toBeDefined();
+      expect(typeof city.requiresCoordinateConversion).toBe('boolean');
+    });
+  });
+
+  it('should have valid center coordinates for all cities', () => {
+    Object.values(CITIES).forEach((city) => {
+      expect(city.centerLat).toBeGreaterThan(-90);
+      expect(city.centerLat).toBeLessThan(90);
+      expect(city.centerLon).toBeGreaterThan(-180);
+      expect(city.centerLon).toBeLessThan(180);
+    });
+  });
+
+  it('should have all cities accessible via getCityConfig', () => {
+    const cityIds: CityId[] = ['oakland', 'sanfrancisco', 'losangeles', 'newyork', 'chicago', 'seattle'];
+    cityIds.forEach((cityId) => {
+      const config = getCityConfig(cityId);
+      expect(config.id).toBe(cityId);
+    });
   });
 });
