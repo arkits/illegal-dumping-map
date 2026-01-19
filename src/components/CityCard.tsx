@@ -48,12 +48,9 @@ export function CityCard({ name, state, route, description, imagePath, color }: 
 
                 <div className="p-10 flex flex-col flex-grow">
                     <div className="mb-4">
-                        <h3 className={`text-3xl font-black text-white ${styles.text} transition-colors leading-none tracking-tighter uppercase`}>
-                            {name}
+                        <h3 className={`text-3xl font-black text-white ${styles.text} transition-colors leading-none tracking-tighter`}>
+                            {name}, {state}
                         </h3>
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2">
-                            Sector {state}
-                        </p>
                     </div>
 
                     <p className="text-slate-400 font-medium text-sm leading-relaxed mb-8 flex-grow">

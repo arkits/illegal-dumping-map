@@ -29,7 +29,7 @@ export default function HomePage() {
               Real-time Analysis Node Active
             </div>
 
-            <h1 className="text-5xl lg:text-7xl font-black tracking-tighter text-white mb-8 leading-[0.9] uppercase">
+            <h1 className="text-5xl lg:text-7xl font-black tracking-tighter text-white mb-8 leading-[0.9]">
               Mapping the <span className="text-blue-500">Impact</span> of Illegal Dumping.
             </h1>
 
@@ -38,10 +38,10 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-wrap gap-6">
-              <a href="#cities" className="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-2xl shadow-blue-500/30 hover:-translate-y-1">
+              <a href="#cities" className="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black tracking-widest text-xs transition-all shadow-2xl shadow-blue-500/30 hover:-translate-y-1">
                 Explore Maps
               </a>
-              <Link href="/weekly" className="px-10 py-5 bg-slate-900 text-white border border-slate-700/50 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-800 transition-all shadow-2xl">
+              <Link href="/weekly" className="px-10 py-5 bg-slate-900 text-white border border-slate-700/50 rounded-2xl font-black tracking-widest text-xs hover:bg-slate-800 transition-all shadow-2xl">
                 Global Trends
               </Link>
             </div>
@@ -58,9 +58,9 @@ export default function HomePage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-20 gap-8">
           <div>
             <h2 className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em] mb-4">
-              Regional Sectors
+              Regional Hubs
             </h2>
-            <h3 className="text-5xl lg:text-6xl font-black text-white tracking-tighter uppercase">
+            <h3 className="text-5xl lg:text-6xl font-black text-white tracking-tighter">
               Featured Nodes
             </h3>
           </div>
@@ -94,7 +94,7 @@ export default function HomePage() {
             <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-4">
               Secondary Hubs
             </h2>
-            <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tighter uppercase">
+            <h3 className="text-4xl lg:text-5xl font-black text-white tracking-tighter">
               Additional Access Points
             </h3>
           </div>
@@ -118,7 +118,7 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-6 py-32 mb-32">
         <div className="bg-gradient-to-br from-blue-700 to-indigo-900 rounded-[4rem] p-10 md:p-24 text-white overflow-hidden relative shadow-[0_0_100px_rgba(37,99,235,0.2)]">
           <div className="relative z-10 max-w-4xl">
-            <h3 className="text-5xl lg:text-7xl font-black mb-10 tracking-tighter uppercase leading-[0.9]">
+            <h3 className="text-5xl lg:text-7xl font-black mb-10 tracking-tighter leading-[0.9]">
               Decentralized <br />Data, Shared <span className="text-blue-300">Responsibility.</span>
             </h3>
             <p className="text-blue-100 text-xl lg:text-2xl font-medium leading-relaxed mb-16 max-w-3xl">
@@ -167,10 +167,10 @@ export default function HomePage() {
             </p>
           </div>
           <div className="flex gap-12">
-            <a href="https://github.com/arkits/illegal-dumping-map" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-blue-500 text-[10px] font-black uppercase tracking-widest transition-colors">
+            <a href="https://github.com/arkits/illegal-dumping-map" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-blue-500 text-[10px] font-black tracking-widest transition-colors">
               Source Log
             </a>
-            <a href="#" className="text-slate-500 hover:text-blue-500 text-[10px] font-black uppercase tracking-widest transition-colors">
+            <a href="#" className="text-slate-500 hover:text-blue-500 text-[10px] font-black tracking-widest transition-colors">
               Protocol
             </a>
           </div>
