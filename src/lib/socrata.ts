@@ -35,6 +35,9 @@ interface SocrataResponse {
   requested_datetime?: string;
   createddate?: string;
   created_date?: string;
+  datetimeclosed?: string;
+  closeddate?: string;
+  closed_date?: string;
   status?: string;
   status_description?: string;
   servicerequeststatusname?: string;
@@ -108,6 +111,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
   let lat: number;
   let lon: number;
   let datetimeinit: string;
+  let datetimeclosed: string | undefined;
   let status: string;
   let description: string;
   let address: string;
@@ -124,6 +128,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     const isWGS = isWGS84(srx, sry);
     [lat, lon] = isWGS ? [sry, srx] : webMercatorToWGS84(srx, sry);
     datetimeinit = record.datetimeinit || "";
+    datetimeclosed = record.datetimeclosed; // Verified
     status = record.status || "";
     description = record.description || "";
     address = record.probaddress || record.address || "";
@@ -137,6 +142,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     }
 
     datetimeinit = record.requested_datetime || "";
+    datetimeclosed = record.closed_date; // Verified
     status = record.status_description || "";
     description = record.service_details || record.description || "";
     address = record.address || "";
@@ -150,6 +156,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     }
 
     datetimeinit = record.createddate || "";
+    datetimeclosed = record.closeddate; // Verified
     status = record.status || "";
     description = record.requesttype || record.description || "";
     address = record.address || "";
@@ -163,6 +170,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     }
 
     datetimeinit = record.created_date || "";
+    datetimeclosed = record.closed_date; // Assumed standard, though missing in sample
     status = record.status || "";
     description = record.descriptor || "";
     address = record.incident_address || "";
@@ -176,6 +184,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     }
 
     datetimeinit = record.created_date || "";
+    datetimeclosed = record.closed_date; // Verified
     status = record.status || "";
     description = record.sr_type || "";
     address = record.street_address || "";
@@ -189,12 +198,13 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     }
 
     datetimeinit = record.createddate || "";
+    datetimeclosed = undefined; // Verified missing in Socrata API
     status = record.servicerequeststatusname || "";
     description = record.descriptionoftheillegaldumping || "";
     address = record.location || "";
   } else if (cityId === "dallas") {
     id = (record.service_request_number as string) || "";
-    
+
     // Dallas uses lat_location field in format "(lat,lon)" as a string
     const latLocationStr = (record.lat_location as string) || "";
     if (latLocationStr) {
@@ -223,6 +233,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     // lat and lon are already numbers, no conversion needed
 
     datetimeinit = (record.created_date as string) || "";
+    datetimeclosed = (record.closed_date as string); // Verified
     status = (record.status as string) || "";
     description = (record.service_request_type as string) || "";
     address = (record.address as string) || "";
@@ -237,6 +248,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     lon = coords[0];
 
     datetimeinit = (record.opendate as string) || "";
+    datetimeclosed = (record.closedate as string); // Verified (note spelling)
     status = "";
     description = (record.casedesc as string) || "";
     const streetNo = record.street_no as string;
@@ -259,6 +271,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     }
 
     datetimeinit = (record.creation_date as string) || "";
+    datetimeclosed = (record.closed_date as string); // Verified
     status = (record.status as string) || "";
     description = (record.request_type as string) || "";
     address = (record.street_address as string) || "";
@@ -275,6 +288,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     }
 
     datetimeinit = rec.requested_datetime || rec.createddate || rec.created_date || "";
+    datetimeclosed = rec.datetimeclosed || rec.closed_date || rec.closeddate || rec.closedate;
     status = rec.status_description || rec.servicerequeststatusname || rec.status || "";
     description = rec.service_request_type || rec.requesttype || rec.service_subtype || rec.description || rec.descriptor || rec.descriptionoftheillegaldumping || rec.service_details || "";
     address = rec.address || rec.street_address || rec.incident_address || rec.location || rec.probaddress || "";
@@ -289,6 +303,7 @@ function transformRecord(record: SocrataResponse, cityId: CityId): DumpingReques
     lat,
     lon,
     datetimeinit,
+    datetimeclosed,
     status,
     description,
     address,
@@ -305,6 +320,7 @@ export async function fetchDumpingRequests(options: {
   centerLat?: number;
   centerLon?: number;
   countOnly?: boolean;
+  onlyClosed?: boolean;
 }): Promise<DumpingRequest[]> {
   const {
     cityId,
@@ -315,6 +331,7 @@ export async function fetchDumpingRequests(options: {
     centerLat,
     centerLon,
     countOnly = false,
+    onlyClosed = false,
   } = options;
 
   const city = getCityConfig(cityId);
@@ -328,6 +345,22 @@ export async function fetchDumpingRequests(options: {
   } else if (year) {
     // For Seattle (no filter needed, all records are illegal dumping)
     whereClause = `date_extract_y(${city.dateField})=${year}`;
+  }
+
+  // Add onlyClosed filter
+  if (onlyClosed) {
+    // Determine the closed date field for this city
+    let closedField = "";
+    if (cityId === "oakland") closedField = "datetimeclosed";
+    else if (cityId === "sanfrancisco" || cityId === "chicago" || cityId === "newyork" || cityId === "dallas" || cityId === "kansascity") closedField = "closed_date";
+    else if (cityId === "losangeles") closedField = "closeddate";
+    else if (cityId === "montgomery") closedField = "closedate";
+
+    // Check if we identified a closed field (Seattle has none)
+    if (closedField) {
+      const condition = `${closedField} IS NOT NULL`;
+      whereClause = whereClause ? `${whereClause} AND ${condition}` : condition;
+    }
   }
 
   const url = new URL(`https://${city.domain}/resource/${city.datasetId}.json`);

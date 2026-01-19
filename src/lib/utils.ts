@@ -267,6 +267,7 @@ export interface DumpingRequest {
   lat: number;
   lon: number;
   datetimeinit: string;
+  datetimeclosed?: string;
   status: string;
   description: string;
   address: string;

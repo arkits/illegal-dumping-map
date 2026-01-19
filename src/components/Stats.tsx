@@ -8,6 +8,7 @@ interface StatsData {
   changePercent: number;
   year: number;
   compareYear: number;
+  avgResolutionHours: number | null;
 }
 
 interface StatsProps {
@@ -18,8 +19,8 @@ interface StatsProps {
 export default function Stats({ stats, loading }: StatsProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 gap-3">
-        {[1, 2].map((i) => (
+      <div className="grid grid-cols-3 gap-3">
+        {[1, 2, 3].map((i) => (
           <div key={i} className="bg-slate-900/90 backdrop-blur-2xl rounded-[2rem] border border-slate-700/50 p-5 animate-pulse">
             <div className="h-2 bg-slate-800 rounded w-1/2 mb-3"></div>
             <div className="h-6 bg-slate-800 rounded w-3/4"></div>
@@ -36,7 +37,7 @@ export default function Stats({ stats, loading }: StatsProps) {
   const changeBg = isIncrease ? "bg-rose-500/10" : "bg-emerald-500/10";
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-3 gap-3">
       {/* Total Card */}
       <div className="bg-slate-900/95 backdrop-blur-2xl rounded-[2rem] p-5 border border-slate-700/50 shadow-2xl">
         <div className="flex flex-col gap-2 mb-3 border-b border-slate-800 pb-2">
@@ -61,6 +62,17 @@ export default function Stats({ stats, loading }: StatsProps) {
           {stats.avgPerWeek.toFixed(1)}
         </p>
         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 opacity-60">Req / Week</p>
+      </div>
+
+      {/* Resolution Time Card */}
+      <div className="bg-slate-900/95 backdrop-blur-2xl rounded-[2rem] p-5 border border-slate-700/50 shadow-2xl">
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 border-b border-slate-800 pb-2">
+          Avg Resolution
+        </p>
+        <p className="text-2xl font-black text-white tracking-tight">
+          {stats.avgResolutionHours ? (stats.avgResolutionHours / 24).toFixed(1) : "N/A"}
+        </p>
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 opacity-60">Days</p>
       </div>
     </div>
   );
