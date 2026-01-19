@@ -6,3 +6,5 @@
   * `bun run build`
   * `bun run lint`
   * `bun run test`
+
+* Use Playwright MCP to test your changes before marking them as complete

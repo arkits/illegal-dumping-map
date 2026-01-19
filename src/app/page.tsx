@@ -15,11 +15,79 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-blue-500/30">
+      {/* Header/Nav */}
+      <nav className="fixed top-0 w-full z-50 bg-slate-950/80 backdrop-blur-xl border-b border-slate-800/50">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-xs group-hover:bg-blue-500 transition-colors">
+              ID
+            </div>
+            <span className="font-black tracking-tighter text-xl text-white uppercase">
+              Illegal Dumping Map
+            </span>
+          </Link>
+          <div className="flex gap-8">
+            <Link href="/weekly" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors">
+              Trends
+            </Link>
+            <Link href="/about" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors">
+              About
+            </Link>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-32 pb-32 lg:pt-48 lg:pb-56">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-gradient-to-b from-blue-600/10 via-transparent to-transparent -z-10" />
+        {/* Map Background - Beautiful and Elegant */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          {/* Subtle grid pattern with better spacing */}
+          <div 
+            className="absolute inset-0 w-full h-full"
+            style={{
+              backgroundImage: `
+                linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px)
+              `,
+              backgroundSize: '120px 120px',
+              backgroundPosition: '0 0',
+              opacity: 0.4,
+            }}
+          />
+          {/* Beautiful organic road network with smooth gradients */}
+          <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" style={{ opacity: 0.6 }}>
+            <defs>
+              <linearGradient id="roadGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="rgba(96, 165, 250, 0.3)" />
+                <stop offset="50%" stopColor="rgba(59, 130, 246, 0.2)" />
+                <stop offset="100%" stopColor="rgba(37, 99, 235, 0.1)" />
+              </linearGradient>
+              <linearGradient id="roadGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="rgba(96, 165, 250, 0.22)" />
+                <stop offset="50%" stopColor="rgba(59, 130, 246, 0.15)" />
+                <stop offset="100%" stopColor="rgba(37, 99, 235, 0.08)" />
+              </linearGradient>
+              <linearGradient id="roadGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="rgba(96, 165, 250, 0.18)" />
+                <stop offset="100%" stopColor="rgba(59, 130, 246, 0.08)" />
+              </linearGradient>
+            </defs>
+            {/* Main arterial roads - smooth curves */}
+            <path d="M0,320 Q350,260 600,360 Q850,460 1200,400" stroke="url(#roadGradient1)" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M200,0 Q300,180 500,300 Q700,420 900,480 Q1100,540 1200,560" stroke="url(#roadGradient1)" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Secondary roads */}
+            <path d="M0,500 Q280,440 520,540 Q760,640 980,660" stroke="url(#roadGradient2)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M420,0 Q520,240 720,350 Q920,460 1120,510" stroke="url(#roadGradient2)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Tertiary roads */}
+            <path d="M750,0 Q830,170 1000,290 Q1170,410 1200,440" stroke="url(#roadGradient3)" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M0,650 Q220,600 460,690 Q700,780 880,820" stroke="url(#roadGradient3)" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M280,0 Q380,140 580,240 Q780,340 960,390" stroke="url(#roadGradient3)" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+        
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-gradient-to-b from-blue-600/10 via-transparent to-transparent z-10 pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-6 relative z-20">
           <div className="max-w-4xl">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-12 animate-fade-in shadow-2xl shadow-blue-500/10">
               <span className="relative flex h-2 w-2 mr-3">
@@ -39,10 +107,13 @@ export default function HomePage() {
 
             <div className="flex flex-wrap gap-6">
               <a href="#cities" className="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black tracking-widest text-xs transition-all shadow-2xl shadow-blue-500/30 hover:-translate-y-1">
-                Explore Maps
+                Explore Cities
               </a>
               <Link href="/weekly" className="px-10 py-5 bg-slate-900 text-white border border-slate-700/50 rounded-2xl font-black tracking-widest text-xs hover:bg-slate-800 transition-all shadow-2xl">
-                Global Trends
+                View Trends
+              </Link>
+              <Link href="/about" className="px-10 py-5 bg-slate-900 text-white border border-slate-700/50 rounded-2xl font-black tracking-widest text-xs hover:bg-slate-800 transition-all shadow-2xl">
+                About
               </Link>
             </div>
           </div>
@@ -170,9 +241,9 @@ export default function HomePage() {
             <a href="https://github.com/arkits/illegal-dumping-map" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-blue-500 text-[10px] font-black tracking-widest transition-colors">
               Source Log
             </a>
-            <a href="#" className="text-slate-500 hover:text-blue-500 text-[10px] font-black tracking-widest transition-colors">
-              Protocol
-            </a>
+            <Link href="/about" className="text-slate-500 hover:text-blue-500 text-[10px] font-black tracking-widest transition-colors">
+              About
+            </Link>
           </div>
         </div>
       </footer>

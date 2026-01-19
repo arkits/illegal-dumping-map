@@ -12,6 +12,7 @@ export interface StatsData {
   year: number;
   compareYear: number;
   cityId: string;
+  avgResolutionHours: number | null;
 }
 
 export interface WeeklyData {
