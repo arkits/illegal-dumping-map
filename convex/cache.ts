@@ -12,7 +12,10 @@ export const get = query({
       v.literal("socrata_raw"),
       v.literal("requests"),
       v.literal("stats"),
-      v.literal("weekly")
+      v.literal("weekly"),
+      v.literal("parking_citations"),
+      v.literal("parking_stats"),
+      v.literal("parking_weekly")
     ),
   },
   handler: async (ctx, args) => {
@@ -48,7 +51,10 @@ export const set = mutation({
       v.literal("socrata_raw"),
       v.literal("requests"),
       v.literal("stats"),
-      v.literal("weekly")
+      v.literal("weekly"),
+      v.literal("parking_citations"),
+      v.literal("parking_stats"),
+      v.literal("parking_weekly")
     ),
     cityId: v.union(
       v.literal("oakland"),
@@ -113,7 +119,10 @@ export const invalidate = mutation({
       v.literal("socrata_raw"),
       v.literal("requests"),
       v.literal("stats"),
-      v.literal("weekly")
+      v.literal("weekly"),
+      v.literal("parking_citations"),
+      v.literal("parking_stats"),
+      v.literal("parking_weekly")
     )),
     cityId: v.optional(v.union(
       v.literal("oakland"),

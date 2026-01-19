@@ -20,6 +20,9 @@ const colorMap: Record<string, { dot: string; gradient: string; text: string }> 
     cyan: { dot: "bg-cyan-500", gradient: "from-cyan-400 to-cyan-600", text: "group-hover:text-cyan-600 dark:group-hover:text-cyan-400" },
     fuchsia: { dot: "bg-fuchsia-500", gradient: "from-fuchsia-400 to-fuchsia-600", text: "group-hover:text-fuchsia-600 dark:group-hover:text-fuchsia-400" },
     emerald: { dot: "bg-emerald-500", gradient: "from-emerald-400 to-emerald-600", text: "group-hover:text-emerald-600 dark:group-hover:text-emerald-400" },
+    amber: { dot: "bg-amber-500", gradient: "from-amber-400 to-amber-600", text: "group-hover:text-amber-600 dark:group-hover:text-amber-400" },
+    rose: { dot: "bg-rose-500", gradient: "from-rose-400 to-rose-600", text: "group-hover:text-rose-600 dark:group-hover:text-rose-400" },
+    violet: { dot: "bg-violet-500", gradient: "from-violet-400 to-violet-600", text: "group-hover:text-violet-600 dark:group-hover:text-violet-400" },
 };
 
 export function CityCard({ name, state, route, description, imagePath, color }: CityCardProps) {
@@ -60,10 +63,10 @@ export function CityCard({ name, state, route, description, imagePath, color }: 
                     <div className="flex items-center text-[10px] font-black text-white uppercase tracking-widest group/link">
                         <span className="relative">
                             Analyze Node
-                            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full" />
+                            <span className={`absolute -bottom-1 left-0 w-0 h-0.5 ${styles.dot} transition-all duration-300 group-hover:w-full`} />
                         </span>
                         <svg
-                            className="w-4 h-4 ml-3 transition-transform duration-300 group-hover:translate-x-2 text-blue-500"
+                            className={`w-4 h-4 ml-3 transition-transform duration-300 group-hover:translate-x-2 ${styles.text.replace('group-hover:', '')}`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"

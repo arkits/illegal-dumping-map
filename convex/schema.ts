@@ -9,7 +9,10 @@ export default defineSchema({
       v.literal("socrata_raw"),      // Raw Socrata API response
       v.literal("requests"),         // Processed DumpingRequest[]
       v.literal("stats"),            // Aggregated stats
-      v.literal("weekly")            // Weekly trend data
+      v.literal("weekly"),           // Weekly trend data
+      v.literal("parking_citations"), // Processed ParkingCitation[]
+      v.literal("parking_stats"),    // Aggregated parking stats
+      v.literal("parking_weekly")    // Parking weekly trend data
     ),
     cityId: v.union(
       v.literal("oakland"),

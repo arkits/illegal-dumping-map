@@ -27,6 +27,9 @@ export default function HomePage() {
             </span>
           </Link>
           <div className="flex gap-8">
+            <Link href="/parking" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors">
+              Parking Citations
+            </Link>
             <Link href="/weekly" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors">
               Trends
             </Link>
@@ -109,6 +112,9 @@ export default function HomePage() {
               <a href="#cities" className="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black tracking-widest text-xs transition-all shadow-2xl shadow-blue-500/30 hover:-translate-y-1">
                 Explore Cities
               </a>
+              <Link href="/parking" className="px-10 py-5 bg-amber-600 hover:bg-amber-500 text-white rounded-2xl font-black tracking-widest text-xs transition-all shadow-2xl shadow-amber-500/30 hover:-translate-y-1">
+                Parking Citations
+              </Link>
               <Link href="/weekly" className="px-10 py-5 bg-slate-900 text-white border border-slate-700/50 rounded-2xl font-black tracking-widest text-xs hover:bg-slate-800 transition-all shadow-2xl">
                 View Trends
               </Link>
