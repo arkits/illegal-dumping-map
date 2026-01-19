@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { ConvexClientProvider } from "./ConvexClientProvider";
 import ReactQueryProvider from "./ReactQueryProvider";
@@ -27,6 +28,7 @@ export default function RootLayout({
             </ReactQueryProvider>
           </ThemeProvider>
         </ConvexClientProvider>
+        <Analytics />
       </body>
     </html>
   );
