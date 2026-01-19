@@ -5,7 +5,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   Cell,
@@ -25,17 +24,17 @@ export default function RequestDistribution({ requests }: RequestDistributionPro
   }, {} as Record<string, number>);
 
   const statusColors: Record<string, string> = {
-    PENDING: "#f59e0b",
-    OPEN: "#3b82f6",
-    CLOSED: "#10b981",
-    COMPLETED: "#6b7280",
+    PENDING: "#fbbf24",
+    OPEN: "#60a5fa",
+    CLOSED: "#34d399",
+    COMPLETED: "#94a3b8",
   };
 
   const data = Object.entries(statusCounts)
     .map(([status, count]) => ({
       status: status.charAt(0) + status.slice(1).toLowerCase(),
       count,
-      fill: statusColors[status] || "#9ca3af",
+      fill: statusColors[status] || "#94a3b8",
     }))
     .sort((a, b) => b.count - a.count);
 
@@ -43,32 +42,43 @@ export default function RequestDistribution({ requests }: RequestDistributionPro
 
   if (total === 0) {
     return (
-      <div className="h-40 bg-gray-100 flex items-center justify-center rounded">
-        <p className="text-xs text-gray-500">No requests to display</p>
+      <div className="h-48 flex items-center justify-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+        Waiting for status...
       </div>
     );
   }
 
   return (
-    <div className="h-40">
-      <div className="mb-1 text-center text-xs text-gray-500">
-        {total.toLocaleString()} total requests
-      </div>
-      <ResponsiveContainer width="100%" height="85%">
-        <BarChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-          <XAxis dataKey="status" tick={{ fontSize: 10 }} />
-          <YAxis tick={{ fontSize: 10 }} width={25} />
-          <Tooltip
-            formatter={(value: number | undefined) => [value ?? 0, "Requests"]}
-            contentStyle={{
-              backgroundColor: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              fontSize: "12px",
-            }}
+    <div className="h-48">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={data}
+          layout="vertical"
+          margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
+        >
+          <XAxis type="number" hide />
+          <YAxis
+            dataKey="status"
+            type="category"
+            tick={{ fontSize: 10, fontWeight: "bold", fill: "#94a3b8" }}
+            axisLine={false}
+            tickLine={false}
+            width={70}
           />
-          <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+          <Tooltip
+            cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
+            contentStyle={{
+              backgroundColor: "rgba(15, 23, 42, 0.95)",
+              backdropFilter: "blur(12px)",
+              border: "1px solid rgba(51, 65, 85, 0.5)",
+              borderRadius: "16px",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.5)",
+              fontSize: "11px",
+              color: "#f8fafc"
+            }}
+            itemStyle={{ color: "#f8fafc", fontWeight: "bold" }}
+          />
+          <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={20}>
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={entry.fill} />
             ))}
@@ -78,3 +88,4 @@ export default function RequestDistribution({ requests }: RequestDistributionPro
     </div>
   );
 }
+

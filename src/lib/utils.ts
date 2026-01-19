@@ -1,4 +1,4 @@
-interface CityConfig {
+export interface CityConfig {
   id: string;
   route: string;
   name: string;

@@ -16,37 +16,42 @@ export default function RequestTable({ requests, onRequestClick, selectedRequest
   const rowVirtualizer = useVirtualizer({
     count: requests.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 44,
+    estimateSize: () => 50,
     overscan: 10,
   });
 
   if (!requests || requests.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
-          No requests to display
-        </div>
+      <div className="bg-slate-900/90 backdrop-blur-2xl rounded-[2rem] p-8 text-center border border-slate-700/50 shadow-2xl">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">No data nodes found</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden flex flex-col">
-      <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          All Requests ({requests.length.toLocaleString()})
+    <div className="bg-slate-900/95 backdrop-blur-2xl rounded-[2rem] overflow-hidden border border-slate-700/50 shadow-2xl flex flex-col h-[500px] transition-all">
+      {/* Header */}
+      <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-transparent">
+        <h2 className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">
+          Incident Log
         </h2>
+        <span className="text-[9px] font-black bg-blue-500/10 text-blue-400 px-2 py-1 rounded-lg border border-blue-500/20 uppercase tracking-tighter">
+          {requests.length.toLocaleString()} total
+        </span>
       </div>
-      <div className="border-t border-gray-200 dark:border-gray-700 flex-1 min-h-0">
-        <div className="grid grid-cols-[70px_1fr_90px_80px] gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-700 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky top-0 z-10">
-          <div className="flex-shrink-0">ID</div>
-          <div className="flex-shrink-0">Location</div>
-          <div className="flex-shrink-0">Date</div>
-          <div className="flex-shrink-0">Status</div>
-        </div>
+
+      {/* Table Headers */}
+      <div className="grid grid-cols-[70px_1fr_45px_100px] gap-3 px-4 py-3 bg-slate-800/30 text-[9px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 sticky top-0 z-10 backdrop-blur-md">
+        <div>ID</div>
+        <div>Location</div>
+        <div className="text-center">Date</div>
+        <div className="text-right">Status</div>
+      </div>
+
+      <div className="flex-1 min-h-0 relative">
         <div
           ref={parentRef}
-          className="h-[calc(100%-32px)] overflow-auto"
+          className="h-full overflow-auto"
         >
           <div
             style={{
@@ -57,39 +62,36 @@ export default function RequestTable({ requests, onRequestClick, selectedRequest
           >
             {rowVirtualizer.getVirtualItems().map((virtualItem) => {
               const request = requests[virtualItem.index];
+              const isSelected = selectedRequestId === request.id;
+
               return (
                 <div
                   key={request.id}
-                  className={`absolute top-0 left-0 w-full grid grid-cols-[70px_1fr_90px_80px] gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 items-center cursor-pointer ${
-                    selectedRequestId === request.id
-                      ? "bg-blue-50 dark:bg-blue-900/30"
-                      : ""
-                  }`}
+                  className={`absolute top-0 left-0 w-full grid grid-cols-[70px_1fr_45px_100px] gap-3 px-4 py-3 border-b border-slate-800/50 items-center hover:bg-white/5 cursor-pointer transition-colors ${isSelected ? "bg-blue-500/10 border-l-4 border-l-blue-500" : ""
+                    }`}
                   style={{
                     height: `${virtualItem.size}px`,
                     transform: `translateY(${virtualItem.start}px)`,
                   }}
                   onClick={() => onRequestClick?.(request.id)}
                 >
-                  <div className="flex-shrink-0 text-xs text-gray-900 dark:text-white truncate" title={request.id}>
-                    {request.id}
-                  </div>
-                  <div className="flex-shrink-0 min-w-0 text-xs text-gray-600 dark:text-gray-300 truncate" title={request.address || `${request.lat.toFixed(4)}, ${request.lon.toFixed(4)}`}>
-                    {request.address || `${request.lat.toFixed(4)}, ${request.lon.toFixed(4)}`}
-                  </div>
-                  <div className="flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(request.datetimeinit).toLocaleDateString()}
-                  </div>
-                  <div className="flex-shrink-0">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                        request.status === "OPEN"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                          : request.status === "CLOSED"
-                          ? "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
-                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                      }`}
-                    >
+                  <span className="text-[10px] font-black text-blue-400 truncate">
+                    #{request.id.slice(-6)}
+                  </span>
+
+                  <p className="text-[11px] font-bold text-slate-200 truncate">
+                    {request.address || "Point Alpha"}
+                  </p>
+
+                  <span className="text-[10px] font-bold text-slate-500 text-center">
+                    {new Date(request.datetimeinit).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}
+                  </span>
+
+                  <div className="flex justify-end">
+                    <span className={`text-[9px] font-black px-2 py-1 rounded-md uppercase tracking-tighter border text-center w-full max-w-[80px] ${request.status === "OPEN"
+                      ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                      : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      }`}>
                       {request.status}
                     </span>
                   </div>

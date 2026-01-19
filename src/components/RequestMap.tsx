@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -132,15 +132,18 @@ function MarkerWithPopup({ request, isSelected }: { request: DumpingRequest; isS
   const icon = getStatusIcon(request.status);
   const selectedIconLocal = selectedIcon;
   const map = useMap();
+  const markerRef = useRef<L.Marker>(null);
 
   useEffect(() => {
-    if (isSelected) {
+    if (isSelected && markerRef.current) {
       map.flyTo([request.lat, request.lon], 18);
+      markerRef.current.openPopup();
     }
   }, [isSelected, map, request.lat, request.lon]);
 
   return (
     <Marker
+      ref={markerRef}
       position={[request.lat, request.lon]}
       icon={isSelected ? selectedIconLocal : icon}
       eventHandlers={{
@@ -150,21 +153,22 @@ function MarkerWithPopup({ request, isSelected }: { request: DumpingRequest; isS
       }}
     >
       <Popup closeButton={true} closeOnClick={false}>
-        <div className="p-1">
-          <h3 className="font-semibold text-base mb-1">Request #{request.id}</h3>
-          <p className="text-sm mb-1">{request.description}</p>
-          <p className="text-xs text-gray-600 mb-1">
-            <span className="font-medium">Status:</span>{" "}
-            <span className={`font-medium ${
-              request.status.toLowerCase().includes("open") || request.status.toLowerCase().includes("new") ? "text-red-600" :
-              request.status.toLowerCase().includes("progress") || request.status.toLowerCase().includes("active") ? "text-orange-600" :
-              request.status.toLowerCase().includes("close") || request.status.toLowerCase().includes("complete") ? "text-green-600" :
-              "text-gray-600"
-            }`}>{request.status}</span>
-          </p>
-          <p className="text-xs text-gray-600 mb-1">
-            <span className="font-medium">Requested:</span> {new Date(request.datetimeinit).toLocaleDateString()}
-          </p>
+        <div className="p-3 bg-white text-slate-900 rounded-xl min-w-[200px]">
+          <h3 className="font-black text-[10px] uppercase tracking-widest mb-2 border-b border-slate-100 pb-2">Request {request.id.slice(-8)}</h3>
+          <p className="text-xs font-bold leading-relaxed mb-3 text-slate-600">{request.description}</p>
+          <div className="space-y-2">
+            <p className="text-[9px] uppercase tracking-tighter">
+              <span className="text-slate-400 font-bold mr-2">Status:</span>
+              <span className={`px-2 py-0.5 rounded-md font-black border ${request.status.toLowerCase().includes("open") || request.status.toLowerCase().includes("new") ? "bg-rose-500/10 text-rose-600 border-rose-500/20" :
+                request.status.toLowerCase().includes("progress") || request.status.toLowerCase().includes("active") ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                  "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                }`}>{request.status}</span>
+            </p>
+            <p className="text-[9px] uppercase tracking-tighter">
+              <span className="text-slate-400 font-bold mr-2">Synchronized:</span>
+              <span className="text-slate-600 font-black">{new Date(request.datetimeinit).toLocaleDateString()}</span>
+            </p>
+          </div>
         </div>
       </Popup>
     </Marker>
@@ -179,10 +183,10 @@ interface MapLegendProps {
 
 function MapLegend({ filters, toggleFilter, counts }: MapLegendProps) {
   const categories = [
-    { id: "open", label: "Open / New", color: "bg-red-500", textColor: "text-red-600" },
-    { id: "inProgress", label: "In Progress", color: "bg-orange-500", textColor: "text-orange-600" },
-    { id: "completed", label: "Completed", color: "bg-green-500", textColor: "text-green-600" },
-    { id: "other", label: "Other", color: "bg-gray-500", textColor: "text-gray-600" },
+    { id: "open", label: "Open / New", color: "bg-rose-500", textColor: "text-rose-400" },
+    { id: "inProgress", label: "In Progress", color: "bg-amber-500", textColor: "text-amber-400" },
+    { id: "completed", label: "Completed", color: "bg-emerald-500", textColor: "text-emerald-400" },
+    { id: "other", label: "Other", color: "bg-slate-500", textColor: "text-slate-400" },
   ];
 
   const allSelected = categories.every((cat) => filters.has(cat.id));
@@ -196,39 +200,34 @@ function MapLegend({ filters, toggleFilter, counts }: MapLegendProps) {
   };
 
   return (
-    <div className="absolute bottom-6 left-2 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg z-[1000] text-xs min-w-[140px]">
-      <div className="flex items-center justify-between mb-2">
-        <p className="font-semibold text-sm">Filter Markers</p>
+    <div className="absolute bottom-10 right-10 bg-slate-900/90 backdrop-blur-2xl p-6 rounded-[2.5rem] border border-slate-700/50 shadow-[0_0_50px_rgba(0,0,0,0.5)] z-[1000] min-w-[200px]">
+      <div className="flex items-center justify-between mb-6">
+        <p className="font-black text-[9px] uppercase tracking-[0.3em] text-slate-500">Node Overlays</p>
         <button
           onClick={toggleAll}
-          className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
+          className="text-[8px] font-black uppercase tracking-tighter px-2.5 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-all"
         >
-          {allSelected ? "Clear All" : "Show All"}
+          {allSelected ? "Purge" : "Sync All"}
         </button>
       </div>
-      <div className="space-y-1.5">
+      <div className="space-y-2.5">
         {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => toggleFilter(cat.id)}
-            className={`w-full flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors ${
-              filters.has(cat.id)
-                ? "bg-gray-100 dark:bg-gray-700"
-                : "opacity-40 hover:opacity-70"
-            }`}
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all border ${filters.has(cat.id)
+              ? "bg-slate-800/50 border-slate-700/50 shadow-inner"
+              : "opacity-30 grayscale border-transparent"
+              } hover:bg-slate-800/80`}
           >
             <span
-              className={`w-2.5 h-2.5 rounded-full ${cat.color} ${
-                !filters.has(cat.id) ? "ring-1 ring-gray-300" : ""
-              }`}
+              className={`w-2.5 h-2.5 rounded-full ${cat.color} ${!filters.has(cat.id) ? "ring-2 ring-slate-800" : "shadow-[0_0_10px_rgba(255,255,255,0.2)] animate-pulse"
+                }`}
             />
-            <span className="flex-1 text-left">{cat.label}</span>
-            <span className={`font-medium ${cat.textColor}`}>{counts[cat.id] || 0}</span>
+            <span className="flex-1 text-left text-[11px] font-black uppercase tracking-wider text-slate-300">{cat.label}</span>
+            <span className={`text-[10px] font-black ${cat.textColor}`}>[{counts[cat.id] || 0}]</span>
           </button>
         ))}
-      </div>
-      <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600 text-[10px] text-gray-500 text-center">
-        {Array.from(filters).length} of {categories.length} shown
       </div>
     </div>
   );
@@ -280,8 +279,8 @@ export default function RequestMap({ requests, centerLat, centerLon, selectedReq
 
   if (!isMounted) {
     return (
-      <div className="h-full w-full bg-gray-100 flex items-center justify-center">
-        <p>Loading map...</p>
+      <div className="h-full w-full bg-slate-950 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-blue-900/30 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -301,15 +300,16 @@ export default function RequestMap({ requests, centerLat, centerLon, selectedReq
   });
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full bg-slate-50">
       <MapContainer
         center={defaultCenter}
         zoom={12}
-        style={{ height: "100%", width: "100%" }}
+        style={{ height: "100%", width: "100%", background: "#f8fafc" }}
+        zoomControl={false}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
         <MapController centerLat={targetLat} centerLon={targetLon} zoom={targetZoom} />
         <MapClickHandler onMapClick={handleMapClick} />

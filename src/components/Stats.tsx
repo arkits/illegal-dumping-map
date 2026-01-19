@@ -18,67 +18,52 @@ interface StatsProps {
 export default function Stats({ stats, loading }: StatsProps) {
   if (loading) {
     return (
-      <div className="grid grid-cols-3 gap-2">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 animate-pulse">
-            <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-1/2 mb-2"></div>
-            <div className="h-6 bg-gray-200 dark:bg-gray-600 rounded w-3/4"></div>
+      <div className="grid grid-cols-2 gap-3">
+        {[1, 2].map((i) => (
+          <div key={i} className="bg-slate-900/90 backdrop-blur-2xl rounded-[2rem] border border-slate-700/50 p-5 animate-pulse">
+            <div className="h-2 bg-slate-800 rounded w-1/2 mb-3"></div>
+            <div className="h-6 bg-slate-800 rounded w-3/4"></div>
           </div>
         ))}
       </div>
     );
   }
 
-  if (!stats) {
-    return null;
-  }
+  if (!stats) return null;
 
-  const changeColor = stats.changePercent >= 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400";
-  const changeArrow = stats.changePercent >= 0 ? "↑" : "↓";
+  const isIncrease = stats.changePercent >= 0;
+  const changeColor = isIncrease ? "text-rose-400" : "text-emerald-400";
+  const changeBg = isIncrease ? "bg-rose-500/10" : "bg-emerald-500/10";
 
   return (
-    <div className="grid grid-cols-3 gap-2">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-          Total ({stats.year})
-        </p>
-        <p className="text-xl font-bold text-gray-900 dark:text-white">
+    <div className="grid grid-cols-2 gap-3">
+      {/* Total Card */}
+      <div className="bg-slate-900/95 backdrop-blur-2xl rounded-[2rem] p-5 border border-slate-700/50 shadow-2xl">
+        <div className="flex flex-col gap-2 mb-3 border-b border-slate-800 pb-2">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+            Total {stats.year}
+          </p>
+          <span className={`inline-fit text-[8px] font-black px-1.5 py-0.5 rounded-md ${changeBg} ${changeColor} border border-current opacity-80 w-fit`}>
+            {isIncrease ? "+" : ""}{stats.changePercent.toFixed(1)}%
+          </span>
+        </div>
+        <p className="text-2xl font-black text-white tracking-tight">
           {stats.totalRequests.toLocaleString()}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          vs {stats.previousTotal.toLocaleString()}
-        </p>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-          Avg/Week ({stats.year})
+      {/* Avg Per Week Card */}
+      <div className="bg-slate-900/95 backdrop-blur-2xl rounded-[2rem] p-5 border border-slate-700/50 shadow-2xl">
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 border-b border-slate-800 pb-2">
+          Weekly Avg
         </p>
-        <p className="text-xl font-bold text-gray-900 dark:text-white">
-          {stats.avgPerWeek.toLocaleString(undefined, {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
-          })}
+        <p className="text-2xl font-black text-white tracking-tight">
+          {stats.avgPerWeek.toFixed(1)}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          vs {stats.previousAvgPerWeek.toLocaleString(undefined, {
-            minimumFractionDigits: 1,
-            maximumFractionDigits: 1,
-          })}
-        </p>
-      </div>
-
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3">
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-          Change
-        </p>
-        <p className={`text-xl font-bold ${changeColor}`}>
-          {changeArrow} {Math.abs(stats.changePercent).toFixed(1)}%
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-          {stats.changePercent >= 0 ? "Increase" : "Decrease"}
-        </p>
+        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1 opacity-60">Req / Week</p>
       </div>
     </div>
   );
 }
+
+

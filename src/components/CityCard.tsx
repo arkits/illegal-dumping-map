@@ -27,37 +27,46 @@ export function CityCard({ name, state, route, description, imagePath, color }: 
 
     return (
         <Link href={route} className="group block h-full">
-            <div className="flex flex-col h-full bg-white dark:bg-gray-800 rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                <div className="relative h-48 w-full overflow-hidden bg-gray-100 dark:bg-gray-700">
+            <div className="flex flex-col h-full bg-slate-900/50 backdrop-blur-2xl rounded-[2.5rem] overflow-hidden border border-slate-700/50 shadow-2xl transition-all duration-500 hover:shadow-blue-500/10 hover:-translate-y-2 hover:bg-slate-800/80">
+                <div className="relative h-56 w-full overflow-hidden bg-slate-800">
                     {imagePath ? (
                         <Image
                             src={imagePath}
                             alt={name}
                             fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-110"
+                            className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-80 group-hover:opacity-100"
                         />
                     ) : (
-                        <div className={`w-full h-full bg-gradient-to-br ${styles.gradient} opacity-20`} />
+                        <div className={`w-full h-full bg-gradient-to-br ${styles.gradient} opacity-30`} />
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+
+                    <div className="absolute top-6 left-6">
+                        <div className={`w-2 h-2 rounded-full ${styles.dot} animate-pulse`} />
+                    </div>
                 </div>
 
-                <div className="p-8 flex flex-col flex-grow">
-                    <div className="mb-3">
-                        <h3 className={`text-2xl font-bold text-gray-900 dark:text-white ${styles.text} transition-colors leading-tight`}>
-                            {name}, <span className="opacity-60">{state}</span>
+                <div className="p-10 flex flex-col flex-grow">
+                    <div className="mb-4">
+                        <h3 className={`text-3xl font-black text-white ${styles.text} transition-colors leading-none tracking-tighter uppercase`}>
+                            {name}
                         </h3>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mt-2">
+                            Sector {state}
+                        </p>
                     </div>
 
-
-                    <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed mb-6 flex-grow">
+                    <p className="text-slate-400 font-medium text-sm leading-relaxed mb-8 flex-grow">
                         {description}
                     </p>
 
-                    <div className="flex items-center text-sm font-semibold text-blue-600 dark:text-blue-400 group/link">
-                        <span>Explore data</span>
+                    <div className="flex items-center text-[10px] font-black text-white uppercase tracking-widest group/link">
+                        <span className="relative">
+                            Analyze Node
+                            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full" />
+                        </span>
                         <svg
-                            className="w-5 h-5 ml-2 transition-transform duration-300 group-hover/link:translate-x-2"
+                            className="w-4 h-4 ml-3 transition-transform duration-300 group-hover:translate-x-2 text-blue-500"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -65,7 +74,7 @@ export function CityCard({ name, state, route, description, imagePath, color }: 
                             <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                strokeWidth={2}
+                                strokeWidth={3}
                                 d="M17 8l4 4m0 0l-4 4m4-4H3"
                             />
                         </svg>
