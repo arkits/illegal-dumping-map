@@ -63,48 +63,55 @@ export async function GET(request: NextRequest) {
 
         if (cached) {
           span.setAttribute("cacheHit", true);
-          return NextResponse.json({ weeklyData: cached, cityId });
+          return NextResponse.json({ weeklyData: cached, cityId }, {
+            headers: {
+              'Cache-Control': 'public, s-maxage=1800, stale-while-revalidate=3600',
+            },
+          });
         }
 
         span.setAttribute("cacheHit", false);
 
-        // Cache miss - fetch from Socrata and process
         const allWeeklyData: WeeklyData[] = [];
 
-        for (const year of years) {
-          const requests = await Sentry.startSpan(
-            {
-              op: "http.client",
-              name: `Fetch dumping requests from Socrata (${cityId}, ${year})`,
-            },
-            async (yearSpan) => {
-              yearSpan.setAttribute("year", year);
-              return await fetchDumpingRequests({ cityId, year, limit: 100000 });
+        const weeklyDataResults = await Promise.all(
+          years.map(async (year) => {
+            const requests = await Sentry.startSpan(
+              {
+                op: "http.client",
+                name: `Fetch dumping requests from Socrata (${cityId}, ${year})`,
+              },
+              async (yearSpan) => {
+                yearSpan.setAttribute("year", year);
+                return await fetchDumpingRequests({ cityId, year, limit: 100000 });
+              }
+            );
+
+            const weeklyCounts: Record<number, number> = {};
+            for (let i = 1; i <= 53; i++) {
+              weeklyCounts[i] = 0;
             }
-          );
 
-          const weeklyCounts: Record<number, number> = {};
-          for (let i = 1; i <= 53; i++) {
-            weeklyCounts[i] = 0;
-          }
-
-          for (const req of requests) {
-            const dateStr = req.datetimeinit.split("T")[0];
-            const [yearStr, monthStr, dayStr] = dateStr.split("-");
-            const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, parseInt(dayStr));
-            const week = getWeekNumber(date);
-            if (week >= 1 && week <= 53) {
-              weeklyCounts[week]++;
+            for (const req of requests) {
+              const dateStr = req.datetimeinit.split("T")[0];
+              const [yearStr, monthStr, dayStr] = dateStr.split("-");
+              const date = new Date(parseInt(yearStr), parseInt(monthStr) - 1, parseInt(dayStr));
+              const week = getWeekNumber(date);
+              if (week >= 1 && week <= 53) {
+                weeklyCounts[week]++;
+              }
             }
-          }
 
-          for (const [week, count] of Object.entries(weeklyCounts)) {
-            allWeeklyData.push({
+            return Object.entries(weeklyCounts).map(([week, count]) => ({
               week: parseInt(week),
               year,
               count,
-            });
-          }
+            }));
+          })
+        );
+
+        for (const yearData of weeklyDataResults) {
+          allWeeklyData.push(...yearData);
         }
 
         span.setAttribute("weeklyDataCount", allWeeklyData.length);

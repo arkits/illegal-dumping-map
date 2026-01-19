@@ -81,7 +81,11 @@ export async function GET(request: NextRequest) {
 
         if (cached) {
           span.setAttribute("cacheHit", true);
-          return NextResponse.json({ requests: cached, count: cached.length });
+          return NextResponse.json({ requests: cached, count: cached.length }, {
+            headers: {
+              'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
+            },
+          });
         }
 
         span.setAttribute("cacheHit", false);

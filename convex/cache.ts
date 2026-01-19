@@ -1,6 +1,5 @@
-import { query, mutation, action, internalQuery, internalMutation } from "./_generated/server";
+import { query, mutation, internalQuery, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
 
 /**
  * Get a cache entry by key and type.

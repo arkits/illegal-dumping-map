@@ -1,14 +1,14 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
-import { useState, useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Stats from "@/components/Stats";
 import WeeklyTrendsChart from "@/components/WeeklyTrendsChart";
 import RequestDistribution from "@/components/RequestDistribution";
 import RequestTable from "@/components/RequestTable";
 import ThemeToggle from "@/components/ThemeToggle";
-import { DumpingRequest, getCityConfig } from "@/lib/utils";
+import { getCityConfig } from "@/lib/utils";
+import { useStats, useRequests, useWeeklyData } from "@/hooks/useCityData";
 import Link from "next/link";
 
 const RequestMap = dynamic(() => import("@/components/RequestMap"), {
@@ -22,37 +22,23 @@ const RequestMap = dynamic(() => import("@/components/RequestMap"), {
   ),
 });
 
-interface WeeklyData {
-  week: number;
-  year: number;
-  count: number;
-}
-
-interface StatsData {
-  totalRequests: number;
-  avgPerWeek: number;
-  previousTotal: number;
-  previousAvgPerWeek: number;
-  changePercent: number;
-  year: number;
-  compareYear: number;
-}
-
 export default function SanFranciscoPage() {
   const cityId = "sanfrancisco";
   const city = getCityConfig(cityId);
   const currentYear = new Date().getFullYear();
-  const [requests, setRequests] = useState<DumpingRequest[]>([]);
-  const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    document.title = "San Francisco Illegal Dumping Map";
-  }, []);
+  const { data: statsData, isError: statsError } = useStats(cityId, currentYear);
+  const { data: requestsData, isError: requestsError } = useRequests(cityId, currentYear);
+  const { data: weeklyDataResponse, isError: weeklyError } = useWeeklyData(cityId, [currentYear, currentYear - 1]);
 
-  const [sidebarWidth, setSidebarWidth] = useState(33);
+  const loading = !statsData || !requestsData || !weeklyDataResponse;
+  const error = statsError || requestsError || weeklyError;
+
+  const requests = requestsData?.requests ?? [];
+  const weeklyData = weeklyDataResponse?.weeklyData ?? [];
+  const stats = statsData ?? null;
+
+  const [sidebarWidth] = useState(33);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
@@ -61,125 +47,6 @@ export default function SanFranciscoPage() {
     e.preventDefault();
     setIsDragging(true);
   };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !containerRef.current) return;
-      
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const newWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      
-      const clampedWidth = Math.min(Math.max(newWidth, 15), 60);
-      setSidebarWidth(clampedWidth);
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-    };
-
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function fetchData() {
-      return Sentry.startSpan(
-        {
-          op: "function",
-          name: "Fetch City Data",
-        },
-        async (span) => {
-          setLoading(true);
-          setError(null);
-
-          span.setAttribute("cityId", cityId);
-          span.setAttribute("year", currentYear);
-
-          try {
-            const [statsRes, requestsRes, weeklyRes] = await Promise.all([
-              Sentry.startSpan(
-                {
-                  op: "http.client",
-                  name: `GET /api/stats?cityId=${cityId}&year=${currentYear}`,
-                },
-                async () => {
-                  return fetch(`/api/stats?cityId=${cityId}&year=${currentYear}&compareYear=${currentYear - 1}`, {
-                    signal: controller.signal,
-                  });
-                }
-              ),
-              Sentry.startSpan(
-                {
-                  op: "http.client",
-                  name: `GET /api/requests?cityId=${cityId}&year=${currentYear}`,
-                },
-                async () => {
-                  return fetch(`/api/requests?cityId=${cityId}&year=${currentYear}&limit=5000`, {
-                    signal: controller.signal,
-                  });
-                }
-              ),
-              Sentry.startSpan(
-                {
-                  op: "http.client",
-                  name: `GET /api/weekly?cityId=${cityId}&years=${currentYear},${currentYear - 1}`,
-                },
-                async () => {
-                  return fetch(`/api/weekly?cityId=${cityId}&years=${currentYear},${currentYear - 1}`, {
-                    signal: controller.signal,
-                  });
-                }
-              ),
-            ]);
-
-            if (!statsRes.ok || !requestsRes.ok || !weeklyRes.ok) {
-              throw new Error("Failed to fetch data");
-            }
-
-            const [statsData, requestsData, weeklyDataResponse] = await Promise.all([
-              statsRes.json(),
-              requestsRes.json(),
-              weeklyRes.json(),
-            ]);
-
-            if (controller.signal.aborted) return;
-
-            span.setAttribute("statsLoaded", true);
-            span.setAttribute("requestsCount", requestsData.requests?.length || 0);
-            span.setAttribute("weeklyDataCount", weeklyDataResponse.weeklyData?.length || 0);
-
-            setStats(statsData);
-            setRequests(requestsData.requests);
-            setWeeklyData(weeklyDataResponse.weeklyData);
-          } catch (err) {
-            if (err instanceof Error && err.name === "AbortError") return;
-            setStats(null);
-            setRequests([]);
-            setWeeklyData([]);
-            setError(err instanceof Error ? err.message : "An error occurred");
-            console.error("Error fetching data:", err);
-            Sentry.captureException(err);
-          } finally {
-            if (!controller.signal.aborted) {
-              setLoading(false);
-            }
-          }
-        }
-      );
-    }
-
-    fetchData();
-    return () => controller.abort();
-  }, [currentYear, cityId]);
 
   return (
     <main className="h-screen w-screen bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden">
@@ -216,7 +83,7 @@ export default function SanFranciscoPage() {
           <div className="p-4 space-y-4">
             {error && (
               <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">Failed to load data</p>
               </div>
             )}
 

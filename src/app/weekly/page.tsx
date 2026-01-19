@@ -1,10 +1,10 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import MultiYearWeeklyChart from "@/components/MultiYearWeeklyChart";
 import { CITIES, CityId } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 
 interface WeeklyData {
   week: number;
@@ -12,87 +12,50 @@ interface WeeklyData {
   count: number;
 }
 
+interface YearsResponse {
+  years: number[];
+}
+
+interface WeeklyResponse {
+  weeklyData: WeeklyData[];
+  cityId: string;
+}
+
+function useWeeklyTrendsData(cityId: CityId) {
+  const { data: yearsData, isError: yearsError } = useQuery<YearsResponse>({
+    queryKey: ["years", cityId],
+    queryFn: async () => {
+      const res = await fetch(`/api/years?cityId=${cityId}`);
+      if (!res.ok) throw new Error("Failed to fetch years");
+      return res.json();
+    },
+  });
+
+  const { data: weeklyDataResponse, isError: weeklyError } = useQuery<WeeklyResponse>({
+    queryKey: ["weekly", cityId, "all"],
+    queryFn: async () => {
+      const res = await fetch(`/api/weekly?cityId=${cityId}&all=true`);
+      if (!res.ok) throw new Error("Failed to fetch weekly data");
+      return res.json();
+    },
+    staleTime: 10 * 60 * 1000,
+  });
+
+  return {
+    weeklyData: weeklyDataResponse?.weeklyData ?? [],
+    availableYears: yearsData?.years ?? [],
+    loading: !yearsData || !weeklyDataResponse,
+    error: yearsError || weeklyError,
+  };
+}
+
 export default function WeeklyTrendsPage() {
-  const [weeklyData, setWeeklyData] = useState<WeeklyData[]>([]);
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [selectedYears, setSelectedYears] = useState<number[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<CityId>("oakland");
 
-  useEffect(() => {
-    document.title = "Weekly Trends - Illegal Dumping Map";
-  }, []);
+  const { weeklyData, availableYears, loading, error } = useWeeklyTrendsData(selectedCity);
 
   const cities = Object.values(CITIES);
-
-  const fetchData = useCallback(async () => {
-    return Sentry.startSpan(
-      {
-        op: "function",
-        name: "Fetch Weekly Data",
-      },
-      async (span) => {
-        setLoading(true);
-        setError(null);
-
-        span.setAttribute("cityId", selectedCity);
-
-        try {
-          const [yearsRes, weeklyRes] = await Promise.all([
-            Sentry.startSpan(
-              {
-                op: "http.client",
-                name: `GET /api/years?cityId=${selectedCity}`,
-              },
-              async () => {
-                return fetch(`/api/years?cityId=${selectedCity}`);
-              }
-            ),
-            Sentry.startSpan(
-              {
-                op: "http.client",
-                name: `GET /api/weekly?cityId=${selectedCity}&all=true`,
-              },
-              async () => {
-                return fetch(`/api/weekly?cityId=${selectedCity}&all=true`);
-              }
-            ),
-          ]);
-
-          if (!yearsRes.ok || !weeklyRes.ok) {
-            throw new Error("Failed to fetch data");
-          }
-
-          const [yearsData, weeklyResponse] = await Promise.all([
-            yearsRes.json(),
-            weeklyRes.json(),
-          ]);
-
-          const years = yearsData.years || [];
-          span.setAttribute("yearsCount", years.length);
-          span.setAttribute("weeklyDataCount", weeklyResponse.weeklyData?.length || 0);
-
-          setAvailableYears(years);
-          setSelectedYears(years);
-          setWeeklyData(weeklyResponse.weeklyData || []);
-        } catch (err) {
-          setAvailableYears([]);
-          setSelectedYears([]);
-          setWeeklyData([]);
-          setError(err instanceof Error ? err.message : "An error occurred");
-          console.error("Error fetching data:", err);
-          Sentry.captureException(err);
-        } finally {
-          setLoading(false);
-        }
-      }
-    );
-  }, [selectedCity]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -114,18 +77,7 @@ export default function WeeklyTrendsPage() {
               <select
                 value={selectedCity}
                 onChange={(e) => {
-                  Sentry.startSpan(
-                    {
-                      op: "ui.change",
-                      name: "City Selection Change",
-                    },
-                    (span) => {
-                      const newCityId = e.target.value as CityId;
-                      span.setAttribute("oldCityId", selectedCity);
-                      span.setAttribute("newCityId", newCityId);
-                      setSelectedCity(newCityId);
-                    }
-                  );
+                  setSelectedCity(e.target.value as CityId);
                 }}
                 className="px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -145,7 +97,7 @@ export default function WeeklyTrendsPage() {
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-red-600 dark:text-red-400">{error}</p>
+            <p className="text-red-600 dark:text-red-400">Failed to load data</p>
           </div>
         )}
 
