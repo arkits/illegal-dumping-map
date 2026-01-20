@@ -28,12 +28,14 @@ interface CityPageLayoutProps {
 export default function CityPageLayout({ cityId, city }: CityPageLayoutProps) {
     const currentYear = new Date().getFullYear();
 
-    const { data: statsData, isError: statsError } = useStats(cityId, currentYear);
+    const { data: statsData, isLoading: statsLoading } = useStats(cityId, currentYear);
     const { data: requestsData, isError: requestsError } = useRequests(cityId, currentYear);
     const { data: weeklyDataResponse, isError: weeklyError } = useWeeklyData(cityId, [currentYear, currentYear - 1]);
 
-    const loading = !statsData || !requestsData || !weeklyDataResponse;
-    const error = statsError || requestsError || weeklyError;
+    // Don't wait for stats API call - only wait for requests and weekly data
+    const loading = !requestsData || !weeklyDataResponse;
+    // Don't block page if only stats fails
+    const error = requestsError || weeklyError;
 
     const requests = requestsData?.requests ?? [];
     const weeklyData = weeklyDataResponse?.weeklyData ?? [];
@@ -115,7 +117,7 @@ export default function CityPageLayout({ cityId, city }: CityPageLayoutProps) {
                     )}
 
                     <div className="flex flex-col gap-4 flex-shrink-0">
-                        <Stats stats={stats} loading={loading} />
+                        <Stats stats={stats} loading={statsLoading} />
                     </div>
 
                     <div className={`${cardClass} flex-shrink-0`}>

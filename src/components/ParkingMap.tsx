@@ -1,104 +1,126 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import Map, { Marker, Popup, MapRef, ViewState } from "react-map-gl/maplibre";
+import maplibregl from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { ParkingCitation } from "@/lib/parking-citations";
 
-delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+// Marker component styles
+const markerStyle = (isSelected: boolean) => ({
+  width: isSelected ? "36px" : "30px",
+  height: isSelected ? "36px" : "30px",
+  borderRadius: "50% 50% 50% 0",
+  background: isSelected ? "#eab308" : "#f97316", // Gold or Orange
+  border: "2px solid #ffffff",
+  transform: "rotate(-45deg)",
+  cursor: "pointer",
+  boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+  position: "relative" as const,
 });
 
-// Use orange/yellow color scheme for parking citations (amber not available, using orange)
-const defaultIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png",
-  iconRetinaUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+interface MapControllerProps {
+  centerLat?: number;
+  centerLon?: number;
+  zoom: number;
+  mapRef: React.RefObject<MapRef | null>;
+}
 
-const selectedIcon = new L.Icon({
-  iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-gold.png",
-  iconRetinaUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-  iconSize: [30, 46],
-  iconAnchor: [15, 46],
-  popupAnchor: [1, -40],
-  shadowSize: [46, 46],
-});
-
-function MapController({ centerLat, centerLon, zoom }: { centerLat?: number; centerLon?: number; zoom: number }) {
-  const map = useMap();
-
+function MapController({ centerLat, centerLon, zoom, mapRef }: MapControllerProps) {
   useEffect(() => {
-    if (centerLat != null && centerLon != null) {
-      map.flyTo([centerLat, centerLon], zoom);
+    if (centerLat != null && centerLon != null && mapRef.current) {
+      mapRef.current.flyTo({
+        center: [centerLon, centerLat],
+        zoom,
+        duration: 1000,
+      });
     }
-  }, [map, centerLat, centerLon, zoom]);
+  }, [centerLat, centerLon, zoom, mapRef]);
 
   return null;
 }
 
-function MapClickHandler({ onMapClick }: { onMapClick: () => void }) {
-  useMapEvents({
-    click: onMapClick,
-  });
-  return null;
+interface MarkerWithPopupProps {
+  citation: ParkingCitation;
+  isSelected: boolean;
+  onMarkerClick: () => void;
 }
 
-function MarkerWithPopup({ citation, isSelected }: { citation: ParkingCitation; isSelected: boolean }) {
-  const map = useMap();
-  const markerRef = useRef<L.Marker>(null);
+function MarkerWithPopup({ citation, isSelected, onMarkerClick }: MarkerWithPopupProps) {
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
-    if (isSelected && markerRef.current) {
-      map.flyTo([citation.lat, citation.lon], 18);
-      markerRef.current.openPopup();
+    if (isSelected) {
+      setShowPopup(true);
     }
-  }, [isSelected, map, citation.lat, citation.lon]);
+  }, [isSelected]);
+
+  const handleMarkerClick = useCallback(() => {
+    setShowPopup(true);
+    onMarkerClick();
+  }, [onMarkerClick]);
 
   return (
-    <Marker
-      ref={markerRef}
-      position={[citation.lat, citation.lon]}
-      icon={isSelected ? selectedIcon : defaultIcon}
-      eventHandlers={{
-        click: () => {
-          map.flyTo([citation.lat, citation.lon], 18);
-        },
-      }}
-    >
-      <Popup closeButton={true} closeOnClick={false}>
-        <div className="p-3 bg-white text-slate-900 rounded-xl min-w-[200px]">
-          <h3 className="font-black text-[10px] uppercase tracking-widest mb-2 border-b border-slate-100 pb-2">Citation {citation.id.slice(-8)}</h3>
-          <p className="text-xs font-bold leading-relaxed mb-3 text-slate-600">{citation.violationDesc || citation.violation}</p>
-          <div className="space-y-2">
-            <p className="text-[9px] uppercase tracking-tighter">
-              <span className="text-slate-400 font-bold mr-2">Fine:</span>
-              <span className="text-amber-600 font-black">${citation.fineAmount.toFixed(2)}</span>
-            </p>
-            <p className="text-[9px] uppercase tracking-tighter">
-              <span className="text-slate-400 font-bold mr-2">Issued:</span>
-              <span className="text-slate-600 font-black">{new Date(citation.issueDate).toLocaleDateString()}</span>
-            </p>
-            {citation.location && (
-              <p className="text-[9px] uppercase tracking-tighter">
-                <span className="text-slate-400 font-bold mr-2">Location:</span>
-                <span className="text-slate-600 font-black">{citation.location}</span>
-              </p>
-            )}
-          </div>
+    <>
+      <Marker
+        longitude={citation.lon}
+        latitude={citation.lat}
+        anchor="bottom"
+        onClick={handleMarkerClick}
+      >
+        <div style={markerStyle(isSelected)}>
+          <div
+            style={{
+              width: "60%",
+              height: "60%",
+              borderRadius: "50%",
+              background: "#ffffff",
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+            }}
+          />
         </div>
-      </Popup>
-    </Marker>
+      </Marker>
+      {showPopup && (
+        <Popup
+          longitude={citation.lon}
+          latitude={citation.lat}
+          anchor="bottom"
+          onClose={() => setShowPopup(false)}
+          closeButton={true}
+          closeOnClick={false}
+        >
+          <div className="p-3 bg-white text-slate-900 rounded-xl min-w-[200px]">
+            <h3 className="font-black text-[10px] uppercase tracking-widest mb-2 border-b border-slate-100 pb-2">
+              Citation {citation.id.slice(-8)}
+            </h3>
+            <p className="text-xs font-bold leading-relaxed mb-3 text-slate-600">
+              {citation.violationDesc || citation.violation}
+            </p>
+            <div className="space-y-2">
+              <p className="text-[9px] uppercase tracking-tighter">
+                <span className="text-slate-400 font-bold mr-2">Fine:</span>
+                <span className="text-amber-600 font-black">${citation.fineAmount.toFixed(2)}</span>
+              </p>
+              <p className="text-[9px] uppercase tracking-tighter">
+                <span className="text-slate-400 font-bold mr-2">Issued:</span>
+                <span className="text-slate-600 font-black">
+                  {new Date(citation.issueDate).toLocaleDateString()}
+                </span>
+              </p>
+              {citation.location && (
+                <p className="text-[9px] uppercase tracking-tighter">
+                  <span className="text-slate-400 font-bold mr-2">Location:</span>
+                  <span className="text-slate-600 font-black">{citation.location}</span>
+                </p>
+              )}
+            </div>
+          </div>
+        </Popup>
+      )}
+    </>
   );
 }
 
@@ -112,6 +134,15 @@ interface MapProps {
 export default function ParkingMap({ citations, centerLat, centerLon, selectedCitationId }: MapProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [popupClosed, setPopupClosed] = useState(false);
+  const mapRef = useRef<MapRef>(null);
+  const [viewState, setViewState] = useState<ViewState>({
+    longitude: centerLon ?? -122.272,
+    latitude: centerLat ?? 37.804747,
+    zoom: 12,
+    bearing: 0,
+    pitch: 0,
+    padding: { top: 0, bottom: 0, left: 0, right: 0 },
+  });
 
   useEffect(() => {
     setIsMounted(true);
@@ -127,6 +158,17 @@ export default function ParkingMap({ citations, centerLat, centerLon, selectedCi
     }
   }, [selectedCitationId]);
 
+  // Update viewState when center changes (but not when selected citation changes)
+  useEffect(() => {
+    if (centerLat != null && centerLon != null && !selectedCitationId) {
+      setViewState((prev) => ({
+        ...prev,
+        longitude: centerLon,
+        latitude: centerLat,
+      }));
+    }
+  }, [centerLat, centerLon, selectedCitationId]);
+
   if (!isMounted) {
     return (
       <div className="h-full w-full bg-slate-950 flex items-center justify-center">
@@ -135,10 +177,6 @@ export default function ParkingMap({ citations, centerLat, centerLon, selectedCi
     );
   }
 
-  const defaultCenter: [number, number] = centerLat != null && centerLon != null
-    ? [centerLat, centerLon]
-    : [37.804747, -122.272];
-
   const selectedCitation = citations.find((c) => c.id === selectedCitationId);
   const targetLat = selectedCitation ? selectedCitation.lat : centerLat;
   const targetLon = selectedCitation ? selectedCitation.lon : centerLon;
@@ -146,26 +184,38 @@ export default function ParkingMap({ citations, centerLat, centerLon, selectedCi
 
   return (
     <div className="relative h-full w-full bg-slate-50">
-      <MapContainer
-        center={defaultCenter}
-        zoom={12}
-        style={{ height: "100%", width: "100%", background: "#f8fafc" }}
-        zoomControl={false}
+      <Map
+        ref={mapRef}
+        {...viewState}
+        onMove={(evt) => setViewState(evt.viewState)}
+        onClick={handleMapClick}
+        mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+        style={{ width: "100%", height: "100%" }}
+        mapLib={maplibregl}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        <MapController
+          centerLat={targetLat}
+          centerLon={targetLon}
+          zoom={targetZoom}
+          mapRef={mapRef}
         />
-        <MapController centerLat={targetLat} centerLon={targetLon} zoom={targetZoom} />
-        <MapClickHandler onMapClick={handleMapClick} />
         {citations.map((citation) => (
           <MarkerWithPopup
             key={citation.id}
             citation={citation}
             isSelected={selectedCitationId === citation.id && !popupClosed}
+            onMarkerClick={() => {
+              if (mapRef.current) {
+                mapRef.current.flyTo({
+                  center: [citation.lon, citation.lat],
+                  zoom: 18,
+                  duration: 1000,
+                });
+              }
+            }}
           />
         ))}
-      </MapContainer>
+      </Map>
     </div>
   );
 }
