@@ -1,10 +1,5 @@
 {
   "name": "illegal-dumping-map",
-  "scripts": {
-    "dokku": {
-      "predeploy": "bun run build"
-    }
-  },
   "env": {
     "DATABASE_PATH": {
       "required": false,
