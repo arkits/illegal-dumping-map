@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { fetchDumpingRequests } from "@/lib/socrata";
-import { convexClient, api } from "@/lib/convex-client";
+import { getRequestsCached, setRequestsCached } from "@/lib/cache";
 
 // Type-safe city ID validator that returns the exact literal type
 const CITY_IDS = ["oakland", "sanfrancisco", "losangeles", "newyork", "chicago", "seattle", "dallas", "montgomery", "kansascity"] as const;
@@ -68,14 +68,14 @@ export async function GET(request: NextRequest) {
       span.setAttribute("offset", offset);
 
       try {
-        // Check Convex cache first
+        // Check SQLite cache first
         const cached = await Sentry.startSpan(
           {
             op: "cache.query",
-            name: "Check Convex cache",
+            name: "Check SQLite cache",
           },
           async () => {
-            return await convexClient.query(api.requests.getCached, {
+            return await getRequestsCached({
               cityId,
               year,
               limit,
@@ -85,9 +85,9 @@ export async function GET(request: NextRequest) {
               centerLon,
             });
           }
-        );
+        ) as Awaited<ReturnType<typeof fetchDumpingRequests>> | null | undefined;
 
-        if (cached) {
+        if (cached != null) {
           span.setAttribute("cacheHit", true);
           return NextResponse.json({ requests: cached, count: cached.length }, {
             headers: {
@@ -119,9 +119,9 @@ export async function GET(request: NextRequest) {
 
         span.setAttribute("requestCount", requests.length);
 
-        // Store in Convex cache (fire and forget)
-        convexClient
-          .mutation(api.requests.setCached, {
+        // Store in SQLite cache
+        try {
+          await setRequestsCached({
             cityId,
             year,
             limit,
@@ -130,11 +130,11 @@ export async function GET(request: NextRequest) {
             centerLat,
             centerLon,
             data: requests,
-          })
-          .catch((err) => {
-            console.error("Failed to cache requests in Convex:", err);
-            Sentry.captureException(err);
           });
+        } catch (err) {
+          console.error("Failed to cache requests in SQLite:", err);
+          Sentry.captureException(err);
+        }
 
         return NextResponse.json({ requests, count: requests.length });
       } catch (error) {

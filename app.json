@@ -1,0 +1,18 @@
+{
+  "name": "illegal-dumping-map",
+  "scripts": {
+    "dokku": {
+      "predeploy": "bun run build"
+    }
+  },
+  "env": {
+    "DATABASE_PATH": {
+      "required": false,
+      "description": "Filesystem path for the SQLite database (e.g. /app/data/illegal-dumping.db)."
+    },
+    "OAK311_API_TOKEN": {
+      "required": false,
+      "description": "Optional Socrata API token for higher rate limits."
+    }
+  }
+}

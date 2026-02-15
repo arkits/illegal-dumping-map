@@ -24,7 +24,7 @@ An interactive web application for visualizing and analyzing illegal dumping ser
 - **Drizzle ORM** - Database ORM
 
 ### Backend
-- **SQLite** - Local database with better-sqlite3
+- **SQLite** - Local database with better-sqlite3 (used for API caching)
 - **Next.js API Routes** - Server endpoints
 
 ### Data Processing
@@ -74,15 +74,9 @@ An interactive web application for visualizing and analyzing illegal dumping ser
    
    > Note: The API token is optional. The application will work without it, but authenticated requests have higher rate limits.
 
-5. **Initialize the database**
-   ```bash
-   bun run db:push
-   ```
-   
-   Or if using Drizzle Kit:
-   ```bash
-   bunx drizzle-kit push
-   ```
+5. **Database setup**
+   The SQLite database is created automatically on first run. You can override
+   the default path by setting `DATABASE_PATH` in your `.env` file.
 
 ## Usage
 
@@ -147,6 +141,14 @@ bun run test:run
 
 All commands should pass without errors.
 
+## Deployment (Dokku)
+
+This app supports Dokku with a local SQLite database. Make sure you:
+
+1. Mount persistent storage for the database (example path: `/app/data`).
+2. Set `DATABASE_PATH=/app/data/illegal-dumping.db`.
+3. Use the provided `Procfile` to start the app.
+
 ## Project Structure
 
 ```
@@ -174,6 +176,7 @@ illegal-dumping-map/
 │   │   ├── index.ts            # Database connection
 │   │   └── schema.ts           # Drizzle schema
 │   └── lib/                    # Utilities
+│       ├── cache.ts            # SQLite cache helpers
 │       ├── socrata.ts          # Socrata API client
 │       └── utils.ts            # Helper functions
 ├── docs/                       # Documentation

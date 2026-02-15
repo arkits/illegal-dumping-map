@@ -1,12 +1,8 @@
 import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { ConvexClientProvider } from "./ConvexClientProvider";
 import ReactQueryProvider from "./ReactQueryProvider";
 import "./globals.css";
-
-const nunito = Nunito({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Illegal Dumping Map",
@@ -20,14 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={nunito.className}>
-        <ConvexClientProvider>
-          <ThemeProvider>
-            <ReactQueryProvider>
-              {children}
-            </ReactQueryProvider>
-          </ThemeProvider>
-        </ConvexClientProvider>
+      <body className="font-sans">
+        <ThemeProvider>
+          <ReactQueryProvider>
+            {children}
+          </ReactQueryProvider>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

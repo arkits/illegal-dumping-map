@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { fetchParkingCitations } from "@/lib/parking-citations";
 import { getWeekNumber } from "@/lib/utils";
-import { convexClient, api } from "@/lib/convex-client";
+import { getParkingWeeklyCached, setParkingWeeklyCached } from "@/lib/cache";
 
 // Type-safe parking city ID validator
 const PARKING_CITY_IDS = ["oakland", "sanfrancisco", "losangeles"] as const;
@@ -56,21 +56,21 @@ export async function GET(request: NextRequest) {
       span.setAttribute("yearCount", years.length);
 
       try {
-        // Check Convex cache first
+        // Check SQLite cache first
         const cached = await Sentry.startSpan(
           {
             op: "cache.query",
-            name: "Check Convex cache",
+            name: "Check SQLite cache",
           },
           async () => {
-            return await convexClient.query(api.parking.getWeeklyCached, {
+            return await getParkingWeeklyCached({
               cityId,
               years,
             });
           }
-        );
+        ) as WeeklyData[] | null | undefined;
 
-        if (cached) {
+        if (cached != null) {
           span.setAttribute("cacheHit", true);
           return NextResponse.json({ weeklyData: cached, cityId }, {
             headers: {
@@ -125,17 +125,17 @@ export async function GET(request: NextRequest) {
 
         span.setAttribute("weeklyDataCount", allWeeklyData.length);
 
-        // Store in Convex cache (fire and forget)
-        convexClient
-          .mutation(api.parking.setWeeklyCached, {
+        // Store in SQLite cache
+        try {
+          await setParkingWeeklyCached({
             cityId,
             years,
             data: allWeeklyData,
-          })
-          .catch((err) => {
-            console.error("Failed to cache parking weekly data in Convex:", err);
-            Sentry.captureException(err);
           });
+        } catch (err) {
+          console.error("Failed to cache parking weekly data in SQLite:", err);
+          Sentry.captureException(err);
+        }
 
         return NextResponse.json({ weeklyData: allWeeklyData, cityId });
       } catch (error) {

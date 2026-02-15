@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { fetchParkingCitations } from "@/lib/parking-citations";
-import { convexClient, api } from "@/lib/convex-client";
+import { getParkingStatsCached, setParkingStatsCached } from "@/lib/cache";
 
 // Type-safe parking city ID validator
 const PARKING_CITY_IDS = ["oakland", "sanfrancisco", "losangeles"] as const;
@@ -50,16 +50,16 @@ export async function GET(request: NextRequest) {
       span.setAttribute("forceRefresh", forceRefresh);
 
       try {
-        // Check Convex cache first (unless forced)
+        // Check SQLite cache first (unless forced)
         let cached = null;
         if (!forceRefresh) {
           cached = await Sentry.startSpan(
             {
               op: "cache.query",
-              name: "Check Convex cache",
+              name: "Check SQLite cache",
             },
             async () => {
-              return await convexClient.query(api.parking.getStatsCached, {
+              return await getParkingStatsCached({
                 cityId,
                 year,
               });
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
           );
         }
 
-        if (cached) {
+        if (cached != null) {
           span.setAttribute("cacheHit", true);
           return NextResponse.json(cached, {
             headers: {
@@ -157,17 +157,17 @@ export async function GET(request: NextRequest) {
         span.setAttribute("previousTotal", previousTotal);
         span.setAttribute("changePercent", changePercent);
 
-        // Store in Convex cache (fire and forget)
-        convexClient
-          .mutation(api.parking.setStatsCached, {
+        // Store in SQLite cache
+        try {
+          await setParkingStatsCached({
             cityId,
             year,
             data: statsData,
-          })
-          .catch((err) => {
-            console.error("Failed to cache parking stats in Convex:", err);
-            Sentry.captureException(err);
           });
+        } catch (err) {
+          console.error("Failed to cache parking stats in SQLite:", err);
+          Sentry.captureException(err);
+        }
 
         return NextResponse.json(statsData);
       } catch (error) {

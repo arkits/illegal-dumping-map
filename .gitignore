@@ -27,3 +27,5 @@ node_modules/
 .env.local
 convex/_generated/
 .playwright-mcp/
+data/
+*.db

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { fetchParkingCitations } from "@/lib/parking-citations";
-import { convexClient, api } from "@/lib/convex-client";
+import { getParkingRequestsCached, setParkingRequestsCached } from "@/lib/cache";
 
 // Type-safe parking city ID validator
 const PARKING_CITY_IDS = ["oakland", "sanfrancisco", "losangeles"] as const;
@@ -68,26 +68,26 @@ export async function GET(request: NextRequest) {
       span.setAttribute("offset", offset);
 
       try {
-        // Check Convex cache first
-        const cached = await Sentry.startSpan(
-          {
-            op: "cache.query",
-            name: "Check Convex cache",
-          },
-          async () => {
-            return await convexClient.query(api.parking.getCached, {
-              cityId,
-              year,
-              limit,
-              offset,
-              radius,
-              centerLat,
-              centerLon,
-            });
-          }
-        );
+      // Check SQLite cache first
+      const cached = await Sentry.startSpan(
+        {
+          op: "cache.query",
+          name: "Check SQLite cache",
+        },
+        async () => {
+          return await getParkingRequestsCached({
+            cityId,
+            year,
+            limit,
+            offset,
+            radius,
+            centerLat,
+            centerLon,
+          });
+        }
+      ) as Awaited<ReturnType<typeof fetchParkingCitations>> | null | undefined;
 
-        if (cached) {
+        if (cached != null) {
           span.setAttribute("cacheHit", true);
           return NextResponse.json({ citations: cached, count: cached.length }, {
             headers: {
@@ -119,9 +119,9 @@ export async function GET(request: NextRequest) {
 
         span.setAttribute("citationCount", citations.length);
 
-        // Store in Convex cache (fire and forget)
-        convexClient
-          .mutation(api.parking.setCached, {
+        // Store in SQLite cache
+        try {
+          await setParkingRequestsCached({
             cityId,
             year,
             limit,
@@ -130,11 +130,11 @@ export async function GET(request: NextRequest) {
             centerLat,
             centerLon,
             data: citations,
-          })
-          .catch((err) => {
-            console.error("Failed to cache parking citations in Convex:", err);
-            Sentry.captureException(err);
           });
+        } catch (err) {
+          console.error("Failed to cache parking citations in SQLite:", err);
+          Sentry.captureException(err);
+        }
 
         return NextResponse.json({ citations, count: citations.length });
       } catch (error) {
